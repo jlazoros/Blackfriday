@@ -36,75 +36,73 @@ Trabajo final de tecnología en R (formato markdown):
 
 Esta es la lluvia de ideas que se hizo en clase... el profe valora mucho la innovación y que hagas cosas originales que nos guste a nosotros.
 
-**Exploratory Data Analysis (EDA)**
+**ANÁLISIS DE LOS DATOS BLACK FRIDAY**
 
-To begin, lets load the dataset that we wil be using for this Exploratory Data Analysis (EDA).
+Para empezar este análisis procedemos a cargar el conjunto de datos BlackFriday.csv:
 
 ```{r}
-dataset = read.csv("BlackFriday.csv")
+datos = read.csv("BlackFriday.csv")
 ```
 
-Now, lets import the libraries we will be utilizing in this kernel.
+Importamos las librerías que vamos a utilizar en este kernel:
 
-```{r message=F, echo = F}
+```{r message=F, warning=F, echo = F}
 library(tidyverse)
 library(scales)
 library(arules)
 library(gridExtra)
 ```
 
-The tidyverse package is what we will use for visualizing and exploring our dataset. It is knows for easy-to-read syntax and massive amounts of useful functions. The scales package will be used mainly to customize plot axis. Lastly, the arules package will be utilized in the final part of this kernel, Association Rule Learning and Apriori. Info regarding all packages used during this EDA is provided in the Works Cited section of this kernel.
+El paquete "tidyverse" es el que usaremos para visualizar y explorar nuestro conjunto de datos. Es conocido por su sintaxis fácil de leer y su gran cantidad de funciones útiles. El paquete "scales" se utilizará principalmente para personalizar el eje del gráfico. Por último, el paquete "arules"" se utilizará en la parte final del análisis, Association Rule Learning y Apriori.
 
-Lets start with a quick overview of the entire dataset.
+Comencemos con una rápida visión general de todo el conjunto de datos:
 
 ```{r}
-summary(dataset)
-head(dataset)
+summary(datos)
+head(datos)
 ```
 
-It looks like we have 12 different columns, each representing a corresponding variable below.
+Tenemos 12 columnas diferentes, cada una de las cuales representa una variable, las cuales procedemos a describir a continuación:
 
-* User_ID: Unique identifier of shopper.
-* Product_ID: Unique identifier of product. (No key given)
-* Gender: Sex of shopper.
-* Age: Age of shopper split into bins.
-* Occupation: Occupation of shopper. (No key given)
-* City_Category: Residence location of shopper. (No key given)
-* Stay_In_Current_City_Years: Number of years stay in current city.
-* Marital_Status: Marital status of shopper.
-* Product_Category_1: Product category of purchase.
-* Product_Category_2: Product may belong to other category.
-* Product_Category_3: Product may belong to other category.
-* Purchase: Purchase amount in dollars.
+* User_ID: Identificador único del comprador.
+* Product_ID: Identificador único del producto.
+* Gender: Sexo del comprador.
+* Age: Edad del comprador.
+* Occupation: Ocupación del comprador.
+* City_Category: Lugar de residencia del comprador.
+* Stay_In_Current_City_Years: Número de años de permanencia en la ciudad actual.
+* Marital_Status: Estado civil del comprador.
+* Product_Category_1: Categoría 1 de producto de la compra.
+* Product_Category_2: Categoría 2 de producto de la compra.
+* Product_Category_3: Categoría 3 de producto de la compra.
+* Purchase: Importe de la compra en dólares.
 
-If we look at the first few rows of our dataset, we can see that each row represents a different transaction, or item purchased by a specific customer. This will come into play later on when we group all transactions by a specific User_ID to get a sum of all purchases made by a single customer.
+Si observamos las primeras filas de nuestro conjunto de datos, podemos ver que cada fila representa una transacción diferente, o un artículo comprado por un cliente específico. Más adelante cuando agrupemos todas las transacciones por un usuario específico obtendremos una suma de todas las compras realizadas por un solo cliente.
 
-One critique we can make regarding this dataset is that there isn't a key given regarding the different Product_IDs and the item they represent. (Ie. We can't attribute P00265242 to an item easily recognizable) In reality, we would want to have another dataset which provides the name of an Item and its Product_ID and then join it to our existing dataset. This won't necessarily affect our EDA, but would be more useful during our implementation of the Apriori algorithm and could make some parts of the EDA clearer to interpret.
+Debemos recalcar que en este conjunto de datos no hay una clave dada con respecto a los diferentes Product_IDs y al ítem que representan. Por ejemplo, no podemos atribuir P00265242 a un elemento fácilmente reconocible. En realidad, nos gustaría tener otro conjunto de datos que proporcione el nombre de un elemento y su Product_ID y luego unirlo a nuestro conjunto de datos existente. Esto no afectará necesariamente a nuestra EDA, pero sería más útil durante nuestra implementación del algoritmo Apriori y podría hacer que algunas partes de la EDA sean más claras de interpretar.
 
-**Gender**
+**Género**
 
-To begin our exploration, lets examine the gender of shoppers at this store.
-
-Since each row represents an individual transaction, we must first group the data by User_ID to remove duplicates.
+Para empezar nuestro análisis, vamos a examinar el género de los compradores en esta tienda. Dado que cada fila representa una transacción individual, primero debemos agrupar los datos por User_ID para eliminar los duplicados.
 
 ```{r}
-dataset_gender = dataset %>%
+datos_gender = datos %>%
                  select(User_ID, Gender) %>%
                  group_by(User_ID) %>%
                  distinct()
-head(dataset_gender)
-summary(dataset_gender$Gender)
+head(datos_gender)
+summary(datos_gender$Gender)
 ```
 
-Now that we have the dataframe necessary to see each User_IDs corresponding gender and their total counts for reference, lets plot the distribution of gender across our dataset.
+Ahora tenemos el conjunto de datos correctamente filtrado para ver el género de cada User_ID y sus totales como referencia. Procedemos a realizar un gráfico el cual representa la distribución de género a través de nuestro conjunto de datos.
 
 ```{r}
-options(scipen=10000)   # To remove scientific numbering
-genderDist  = ggplot(data = dataset_gender) +
-                geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
-                labs(title = 'Gender of Customers') + 
-                scale_fill_brewer(palette = 'PuBuGn')
-print(genderDist)
+options(scipen=10000)   # Para eliminar la numeración científica.
+gender_dist  = ggplot(data = datos_gender) +
+               geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
+               labs(title = 'Género Clientes') + 
+               scale_fill_brewer(palette = 'PuBuGn')
+print(gender_dist)
 ```
 
 As we can see, there are quite a few more males than females shopping at our store on Black Friday. This gender split metric is helpful to retailers because some might want to modify their store layout, product selection, and other variables differently depending on the gender proportion of their shoppers.
@@ -117,12 +115,12 @@ Although this does not give direct insight into recommended actions for retail s
 To investigate further, lets compute the average spending amount as it relates to Gender. For easy interpretation and traceback we will create separate tables and then join them together.
 
 ```{r}
-total_purchase_user = dataset %>%
+total_purchase_user = datos %>%
                       select(User_ID, Gender, Purchase) %>%
                       group_by(User_ID) %>%
                       arrange(User_ID) %>%
                       summarise(Total_Purchase = sum(Purchase))
-user_gender = dataset %>%
+user_gender = datos %>%
               select(User_ID, Gender) %>%
               group_by(User_ID) %>%
               arrange(User_ID) %>%
@@ -162,7 +160,7 @@ Here we see an interesting observation. Even though female shoppers make less pu
 Now lets switch gears and examine our top selling products. In this situation, we won't group by product ID since we want to see duplicates, just in case people are buying 2 or more quantities of the same product.
 
 ```{r}
-top_sellers = dataset %>%
+top_sellers = datos %>%
               count(Product_ID, sort = TRUE)
 top_5 = head(top_sellers, 5)
 top_5
@@ -179,7 +177,7 @@ Looks like our top 5 best sellers are (by product ID)
 Now that we have Identified our top 5 best selling products, lets examine the best selling product, P00265242.
 
 ```{r}
-best_seller = dataset[dataset$Product_ID == 'P00265242', ]
+best_seller = datos[datos$Product_ID == 'P00265242', ]
 head(best_seller)
 ```
 
@@ -190,25 +188,25 @@ Another interesting finding is that even though people are purchasing the same p
 Lets continue to analyze our best seller to see if any relationship to Gender exits.
 
 ```{r}
-genderDist_bs  = ggplot(data = best_seller) +
+gender_dist_bs  = ggplot(data = best_seller) +
                  geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
                  labs(title = 'Gender of Customers (Best Seller)') +
                  scale_fill_brewer(palette = 'PuBuGn')
-print(genderDist_bs)
+print(gender_dist_bs)
 ```
 
-We see a similar distribution between genders to our overall dataset gender split - lets confirm.
+We see a similar distribution between genders to our overall datos gender split - lets confirm.
 
 ```{r}
-genderDist_bs_prop = ggplot(data = best_seller) + 
+gender_dist_bs_prop = ggplot(data = best_seller) + 
                             geom_bar(fill = 'lightblue', mapping = aes(x = Gender, y = ..prop.., group = 1, fill = Gender)) +
                             labs(title = 'Gender of Customers (Best Seller - Proportion)') +
                             theme(plot.title = element_text(size=9.5))
-genderDist_prop = ggplot(data = dataset_gender) + 
+gender_dist_prop = ggplot(data = datos_gender) + 
                          geom_bar(fill = "lightblue4", mapping = aes(x = Gender, y = ..prop.., group = 1)) +
                          labs(title = 'Gender of Customers (Total Proportion)') +
                          theme(plot.title = element_text(size=9.5)) 
-grid.arrange(genderDist_prop, genderDist_bs_prop, ncol=2)
+grid.arrange(gender_dist_prop, gender_dist_bs_prop, ncol=2)
 ```
 
 We can see that between the overall observation set, both purchasers of the best seller and purchasers of all products are roughly ~25% female and ~75% male. A slight difference does exist but it seems like we can generally conclude that our best seller does not cater to a specific gender.
@@ -220,14 +218,14 @@ Now, let's move on and examine the Age variable.
 Lets begin examining Age by creating a table of each individual age group and their respective counts.
 
 ```{r}
-customers_age = dataset %>%
+customers_age = datos %>%
                 select(User_ID, Age) %>%
                 distinct() %>%
                 count(Age)
 customers_age
 ```
 
-Here, we can see a dataset that shows the count of each Age category of customers at our store. Lets visualize this table.
+Here, we can see a datos that shows the count of each Age category of customers at our store. Lets visualize this table.
 
 ```{r}
 customers_age_vis = ggplot(data = customers_age) + 
@@ -251,13 +249,13 @@ ageDist_bs  = ggplot(data = best_seller) +
 print(ageDist_bs)
 ```
 
-It seems as though younger people (18-25 & 26-35) account for the highest number of purchases of the best selling product. Lets compare this observation to the overall dataset.
+It seems as though younger people (18-25 & 26-35) account for the highest number of purchases of the best selling product. Lets compare this observation to the overall datos.
 
 ```{r}
 grid.arrange(customers_age_vis, ageDist_bs, ncol=2)
 ```
 
-We can see that there is some deviation with the proportion of customers grouped by age when comparing the best selling product to the overall dataset. It looks like older customers > Age 45 are buying the top seller slightly less than other products included in the overall dataset.
+We can see that there is some deviation with the proportion of customers grouped by age when comparing the best selling product to the overall datos. It looks like older customers > Age 45 are buying the top seller slightly less than other products included in the overall datos.
 
 Now that we have examined age, lets move to another variable.
 
@@ -266,7 +264,7 @@ Now that we have examined age, lets move to another variable.
 Let's create a table of each User_ID and their corresponding City_Category.
 
 ```{r}
-customers_location =  dataset %>%
+customers_location =  datos %>%
                       select(User_ID, City_Category) %>%
                       distinct()
 head(customers_location)
@@ -284,7 +282,7 @@ print(customers_location_vis)
 We can see that most of our customers live in City C. Now, we can compute the total purchase amount by City to see the which city's customers spent the most at our store.
 
 ```{r}
-purchases_city = dataset %>%
+purchases_city = datos %>%
                  group_by(City_Category) %>%
                  summarise(Purchases = sum(Purchase))
 purchases_city_1000s = purchases_city %>%
@@ -316,7 +314,7 @@ Let's continue to investigate and try to determine the reason for this observati
 Lets find how many purchases were made by customers from each city. First, we will get the total number of purchases for each corresponding User_ID.
 
 ```{r}
-customers = dataset %>%
+customers = datos %>%
             group_by(User_ID) %>%
             count(User_ID)
 head(customers)
@@ -325,7 +323,7 @@ head(customers)
 This tells us how many times a certain user made a purchase. To dive deeper lets compute the total purchase amount for each user, then join it with the other table
 
 ```{r}
-customers_City =  dataset %>%
+customers_City =  datos %>%
                   select(User_ID, City_Category) %>%
                   group_by(User_ID) %>%
                   distinct() %>%
@@ -381,14 +379,14 @@ An interesting revelation has been made! Although customers residing in City C p
 Lets now examine the distribution of customers who have lived in their city the longest.
 
 ```{r}
-customers_stay = dataset %>%
+customers_stay = datos %>%
                  select(User_ID, City_Category, Stay_In_Current_City_Years) %>%
                  group_by(User_ID) %>%
                  distinct()
 head(customers_stay)
 ```
 
-Now that we have our dataset in order, we can plot and explore.
+Now that we have our datos in order, we can plot and explore.
 
 Lets see where most of our customers are living.
 
@@ -436,7 +434,7 @@ Looking at this chart we can see the distribution of the total customer base and
 Now lets do some investigation regarding store customers and their purchases. We will start by computing the total purchase amount by user ID
 
 ```{r}
-customers_total_purchase_amount = dataset %>%
+customers_total_purchase_amount = datos %>%
                                   group_by(User_ID) %>%
                                   summarise(Purchase_Amount = sum(Purchase))
 head(customers_total_purchase_amount)
@@ -479,24 +477,24 @@ Here we are seeing a very right (positive) skewed density plot with a long tail.
 Lets now examine the marital status of store customers.
 
 ```{r}
-dataset_maritalStatus = dataset %>%
+datos_maritalStatus = datos %>%
                         select(User_ID, Marital_Status) %>%
                         group_by(User_ID) %>%
                         distinct()
-head(dataset_maritalStatus)
+head(datos_maritalStatus)
 ```
 
 Note, we need to quickly change Marital_Status from a numeric variable to a categorical type.
 
 ```{r}
-dataset_maritalStatus$Marital_Status = as.character(dataset_maritalStatus$Marital_Status)
-typeof(dataset_maritalStatus$Marital_Status)
+datos_maritalStatus$Marital_Status = as.character(datos_maritalStatus$Marital_Status)
+typeof(datos_maritalStatus$Marital_Status)
 ```
 
-If we look back at the variable descriptions of the dataset, we don't have a clear guide for marital status. In other cases, it would be best to reach out to the provider of the data to be completely sure of what the values in a column represent but in this case, we will assume that 1 = married and 0 = single.
+If we look back at the variable descriptions of the datos, we don't have a clear guide for marital status. In other cases, it would be best to reach out to the provider of the data to be completely sure of what the values in a column represent but in this case, we will assume that 1 = married and 0 = single.
 
 ```{r}
-marital_vis = ggplot(data = dataset_maritalStatus) +
+marital_vis = ggplot(data = datos_maritalStatus) +
                      geom_bar(mapping = aes(x = Marital_Status, y = ..count.., fill = Marital_Status)) +
                      labs(title = 'Marital Status') +
                      scale_fill_brewer(palette = 'Pastel2')
@@ -506,13 +504,13 @@ print(marital_vis)
 It looks like most of our shoppers happen to be single or unmarried. Similar to our investigation of age groups, we can look at the makeup of Marital_Status in each City_Category.
 
 ```{r}
-dataset_maritalStatus = dataset_maritalStatus %>%
+datos_maritalStatus = datos_maritalStatus %>%
                         full_join(customers_stay, by = 'User_ID') 
-head(dataset_maritalStatus)
+head(datos_maritalStatus)
 ```
 
 ```{r}
-maritalStatus_cities = dataset_maritalStatus %>%
+maritalStatus_cities = datos_maritalStatus %>%
                        group_by(City_Category, Marital_Status) %>%
                        tally()
 head(maritalStatus_cities)
@@ -531,24 +529,24 @@ ggplot(data = maritalStatus_cities, aes(x = City_Category, y = n, fill = Marital
 Here, we can see that out off all Cities, the highest proportion of single shoppers seems to be in City A. Now, lets investigate the Stay_in_Current_City distribution within each City_Category.
 
 ```{r}
-Users_Age = dataset %>%
+Users_Age = datos %>%
             select(User_ID, Age) %>%
             distinct()
 head(Users_Age)
 ```
 
 ```{r}
-dataset_maritalStatus = dataset_maritalStatus %>%
+datos_maritalStatus = datos_maritalStatus %>%
                         full_join(Users_Age, by = 'User_ID')
-head(dataset_maritalStatus)
+head(datos_maritalStatus)
 ```
 
 ```{r}
-City_A = dataset_maritalStatus %>%
+City_A = datos_maritalStatus %>%
          filter(City_Category == 'A')
-City_B = dataset_maritalStatus %>%
+City_B = datos_maritalStatus %>%
          filter(City_Category == 'B')
-City_C = dataset_maritalStatus %>%
+City_C = datos_maritalStatus %>%
          filter(City_Category == 'C')
 head(City_A)
 head(City_B)
@@ -581,12 +579,12 @@ It looks as though City A has less shoppers living there over the age of 45 comp
 Now, we will investigate who our top shoppers were on Black Friday.
 
 ```{r}
-top_shoppers = dataset %>%
+top_shoppers = datos %>%
                count(User_ID, sort = TRUE)
 head(top_shoppers)
 ```
 
-Looks like User_ID 1001680 shows up the most on our master ledger of shopper data. Since each individual row represents a different transaction/product, it looks like this user made over 1000 total transactions! We can join together this top shoppers dataset with our total customer purchases dataset to see them combined.
+Looks like User_ID 1001680 shows up the most on our master ledger of shopper data. Since each individual row represents a different transaction/product, it looks like this user made over 1000 total transactions! We can join together this top shoppers datos with our total customer purchases datos to see them combined.
 
 ```{r}
 top_shoppers =  top_shoppers %>%
@@ -615,10 +613,10 @@ Looks like User_ID 1005069 has the highest Average_Purchase_Amount and a total P
 
 **Occupation**
 
-The last thing we will analyze is the occupation of customers in our dataset.
+The last thing we will analyze is the occupation of customers in our datos.
 
 ```{r}
-customers_Occupation =  dataset %>%
+customers_Occupation =  datos %>%
                         select(User_ID, Occupation) %>%
                         group_by(User_ID) %>%
                         distinct() %>%
@@ -626,7 +624,7 @@ customers_Occupation =  dataset %>%
 head(customers_Occupation)
 ```
 
-Now that we have our dataset necessary, we can group together the total Purchase_Amount for each Occupation identifier. We will then convert Occupation to a charater data type.
+Now that we have our datos necessary, we can group together the total Purchase_Amount for each Occupation identifier. We will then convert Occupation to a charater data type.
 
 ```{r}
 totalPurchases_Occupation = customers_Occupation %>%
