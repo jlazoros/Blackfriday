@@ -1,8 +1,11 @@
 ---
 title: "Black Friday"
 authors: "Miquel Martorell"
-date: "26/1/2019"
-output: html_document
+date: "15/01/2019"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -19,7 +22,7 @@ dataset = read.csv("BlackFriday.csv")
 
 Now, lets import the libraries we will be utilizing in this kernel.
 
-```{r}
+```{r message=F, echo = F}
 library(tidyverse)
 library(scales)
 library(arules)
@@ -37,18 +40,19 @@ head(dataset)
 
 It looks like we have 12 different columns, each representing a corresponding variable below.
 
-User_ID: Unique identifier of shopper.
-Product_ID: Unique identifier of product. (No key given)
-Gender: Sex of shopper.
-Age: Age of shopper split into bins.
-Occupation: Occupation of shopper. (No key given)
-City_Category: Residence location of shopper. (No key given)
-Stay_In_Current_City_Years: Number of years stay in current city.
-Marital_Status: Marital status of shopper.
-Product_Category_1: Product category of purchase.
-Product_Category_2: Product may belong to other category.
-Product_Category_3: Product may belong to other category.
-Purchase: Purchase amount in dollars.
+* User_ID: Unique identifier of shopper.
+* Product_ID: Unique identifier of product. (No key given)
+* Gender: Sex of shopper.
+* Age: Age of shopper split into bins.
+* Occupation: Occupation of shopper. (No key given)
+* City_Category: Residence location of shopper. (No key given)
+* Stay_In_Current_City_Years: Number of years stay in current city.
+* Marital_Status: Marital status of shopper.
+* Product_Category_1: Product category of purchase.
+* Product_Category_2: Product may belong to other category.
+* Product_Category_3: Product may belong to other category.
+* Purchase: Purchase amount in dollars.
+
 If we look at the first few rows of our dataset, we can see that each row represents a different transaction, or item purchased by a specific customer. This will come into play later on when we group all transactions by a specific User_ID to get a sum of all purchases made by a single customer.
 
 One critique we can make regarding this dataset is that there isn't a key given regarding the different Product_IDs and the item they represent. (Ie. We can't attribute P00265242 to an item easily recognizable) In reality, we would want to have another dataset which provides the name of an Item and its Product_ID and then join it to our existing dataset. This won't necessarily affect our EDA, but would be more useful during our implementation of the Apriori algorithm and could make some parts of the EDA clearer to interpret.
@@ -232,3 +236,174 @@ grid.arrange(customers_age_vis, ageDist_bs, ncol=2)
 We can see that there is some deviation with the proportion of customers grouped by age when comparing the best selling product to the overall dataset. It looks like older customers > Age 45 are buying the top seller slightly less than other products included in the overall dataset.
 
 Now that we have examined age, lets move to another variable.
+
+** City **
+
+Let's create a table of each User_ID and their corresponding City_Category.
+
+```{r}
+customers_location =  dataset %>%
+                      select(User_ID, City_Category) %>%
+                      distinct()
+head(customers_location)
+```
+
+```{r}
+customers_location_vis = ggplot(data = customers_location) +
+                                geom_bar(color = 'white', mapping = aes(x = City_Category, y = ..count.., fill = City_Category)) +
+                                labs(title = 'Location of Customers') + 
+                                scale_fill_brewer(palette = "Dark2") + 
+                                theme(legend.position="none")
+print(customers_location_vis)
+```
+
+We can see that most of our customers live in City C. Now, we can compute the total purchase amount by City to see the which city's customers spent the most at our store.
+
+```{r}
+purchases_city = dataset %>%
+                 group_by(City_Category) %>%
+                 summarise(Purchases = sum(Purchase))
+purchases_city_1000s = purchases_city %>%
+                       mutate(purchasesThousands = purchases_city$Purchases / 1000)
+purchases_city_1000s
+```
+
+In order to work with larger numbers, we divided the Purchases column/1000. This is a common practice within the business and acounting world, and it makes large numbers easier to read and chart.
+
+Now that we have our table, lets visualize our results.
+
+```{r}
+purchaseCity_vis = ggplot(data = purchases_city_1000s, aes(x = City_Category, y = purchasesThousands, fill = City_Category)) +
+                          geom_bar(color = 'white', stat = 'identity') +
+                          labs(title = 'Total Customer Purchase Amount (by City)', y = '($000s)', x = 'City Category') +
+                          scale_fill_brewer(palette = "Dark2") + 
+                          theme(legend.position="none", plot.title = element_text(size = 9))
+print(purchaseCity_vis)
+```
+
+```{r}
+grid.arrange(customers_location_vis, purchaseCity_vis, ncol=2)
+```
+
+Here we can see that customers from City C were the most frequent shoppers at our store on Black Friday but Customers from City B had the highest amount of total purchases.
+
+Let's continue to investigate and try to determine the reason for this observation.
+
+Lets find how many purchases were made by customers from each city. First, we will get the total number of purchases for each corresponding User_ID.
+
+```{r}
+customers = dataset %>%
+            group_by(User_ID) %>%
+            count(User_ID)
+head(customers)
+```
+
+This tells us how many times a certain user made a purchase. To dive deeper lets compute the total purchase amount for each user, then join it with the other table
+
+```{r}
+customers_City =  dataset %>%
+                  select(User_ID, City_Category) %>%
+                  group_by(User_ID) %>%
+                  distinct() %>%
+                  ungroup() %>%
+                  left_join(customers, customers_City, by = 'User_ID') 
+head(customers_City)
+city_purchases_count = customers_City %>%
+                       select(City_Category, n) %>%
+                       group_by(City_Category) %>%
+                       summarise(CountOfPurchases = sum(n))
+city_purchases_count
+```
+
+```{r}
+city_count_purchases_vis = ggplot(data = city_purchases_count, aes(x = City_Category, y = CountOfPurchases, fill = City_Category)) +
+                           geom_bar(color = 'white', stat = 'identity') +
+                           labs(title = 'Total Purchase Count (by City)', y = 'Count', x = 'City Category') +
+                           scale_fill_brewer(palette = "Dark2") +
+                           theme(legend.position="none", plot.title = element_text(size = 9))
+print(city_count_purchases_vis)
+```
+
+```{r}
+grid.arrange(purchaseCity_vis, city_count_purchases_vis, ncol = 2)
+```
+
+One inference we can make from these charts is that customers from City B are simply making more purchases than residence of City A + City C, and not necessarily buying more expensive products. We can make this assumption due to the fact that the "Total Count of Purchases" chart has a very similar appearance to the "Total Customer Purchase Amount" chart. If it were the other case, then customers from City B would most likely have a lower count of total purchases corresponding to a higher total purchase amount.
+
+Now, since we have identified that the purchase counts across City_Category follow a similar distribution to total purchase amount, lets examine the distribution of our best selling product (P00265242) within each City_Category.
+
+```{r}
+head(best_seller)
+best_seller_city = best_seller %>%
+                   select(User_ID, City_Category) %>%
+                   distinct() %>%
+                   count(City_Category)
+best_seller_city
+```
+
+```{r}
+best_seller_city_vis = ggplot(data = best_seller_city, aes(x = City_Category, y = n, fill = City_Category)) +
+                              geom_bar(color = 'white', stat = 'identity') +
+                              labs(title = 'Best Seller Purchase Count (by City)', y = 'Count', x = 'City Category') +
+                              scale_fill_brewer(palette = "Blues") +
+                              theme(legend.position="none", plot.title = element_text(size = 9))
+grid.arrange(city_count_purchases_vis,best_seller_city_vis, ncol = 2)
+```
+
+An interesting revelation has been made! Although customers residing in City C purchase more of our "best seller" than City A + B, residents of City C fall behind City B in overall number of purchases.
+
+** Stay in Current City **
+
+Lets now examine the distribution of customers who have lived in their city the longest.
+
+```{r}
+customers_stay = dataset %>%
+                 select(User_ID, City_Category, Stay_In_Current_City_Years) %>%
+                 group_by(User_ID) %>%
+                 distinct()
+head(customers_stay)
+```
+
+Now that we have our dataset in order, we can plot and explore.
+
+Lets see where most of our customers are living.
+
+```{r}
+residence = customers_stay %>%
+            group_by(City_Category) %>%
+            tally()
+head(residence)
+```
+
+Looks like most of our customers are living in City C. Now, lets investigate further.
+
+```{r}
+customers_stay_vis = ggplot(data = customers_stay, aes(x = Stay_In_Current_City_Years, y = ..count.., fill = Stay_In_Current_City_Years)) +
+                            geom_bar(stat = 'count') +
+                            scale_fill_brewer(palette = 15) +
+                            labs(title = 'Customers Stay in Current City', y = 'Count', x = 'Stay in Current City', fill = 'Number of Years in Current City')
+print(customers_stay_vis)
+```
+
+It looks like most of our customers have only been living in their respective cities for 1 year. In order to see a better distribution, lets make a stacked bar chart according to each City_Category.
+
+```{r}
+stay_cities = customers_stay %>%
+              group_by(City_Category, Stay_In_Current_City_Years) %>%
+              tally() %>%
+              mutate(Percentage = (n/sum(n))*100)
+head(stay_cities)
+```
+
+```{r}
+ggplot(data = stay_cities, aes(x = City_Category, y = n, fill = Stay_In_Current_City_Years)) + 
+       geom_bar(stat = "identity", color = 'white') + 
+       scale_fill_brewer(palette = 2) + 
+       labs(title = "City Category + Stay in Current City", 
+            y = "Total Count (Years)", 
+            x = "City", 
+            fill = "Stay Years")
+```
+
+Looking at this chart we can see the distribution of the total customer base and their respective city residences, split by the amount of time they have lived there. Here, we can notice that in every City_Category, the most common stay length seems to be 1 year.
+
