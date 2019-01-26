@@ -79,7 +79,7 @@ Tenemos 12 columnas diferentes, cada una de las cuales representa una variable, 
 
 Si observamos las primeras filas de nuestro conjunto de datos, podemos ver que cada fila representa una transacción diferente, o un artículo comprado por un cliente específico. Más adelante cuando agrupemos todas las transacciones por un usuario específico obtendremos una suma de todas las compras realizadas por un solo cliente.
 
-Debemos recalcar que en este conjunto de datos no hay una clave dada con respecto a los diferentes Product_IDs y al ítem que representan. Por ejemplo, no podemos atribuir P00265242 a un elemento fácilmente reconocible. En realidad, nos gustaría tener otro conjunto de datos que proporcione el nombre de un elemento y su Product_ID y luego unirlo a nuestro conjunto de datos existente. Esto no afectará necesariamente a nuestra EDA, pero sería más útil durante nuestra implementación del algoritmo Apriori y podría hacer que algunas partes de la EDA sean más claras de interpretar.
+Debemos recalcar que en este conjunto de datos no hay una clave dada con respecto a los diferentes Product_IDs y al ítem que representan. Por ejemplo, no podemos atribuir P00265242 a un elemento fácilmente reconocible. En realidad, nos gustaría tener otro conjunto de datos que proporcione el nombre de un elemento y su Product_ID y luego unirlo a nuestro conjunto de datos existente. *Esto no afectará necesariamente a nuestro análisis, pero sería más útil durante nuestra implementación del algoritmo Apriori y podría hacer que algunas partes de la EDA sean más claras de interpretar.*
 
 **Género**
 
@@ -87,9 +87,9 @@ Para empezar nuestro análisis, vamos a examinar el género de los compradores e
 
 ```{r}
 datos_gender = datos %>%
-                 select(User_ID, Gender) %>%
-                 group_by(User_ID) %>%
-                 distinct()
+               select(User_ID, Gender) %>%
+               group_by(User_ID) %>%
+               distinct()
 head(datos_gender)
 summary(datos_gender$Gender)
 ```
@@ -150,7 +150,7 @@ print(gender_average)
 
 Aquí podemos ver una observación interesante. Aunque las mujeres hacen menos compras que los hombres, parecen estar comprando casi tanto en promedio como los hombres. Dicho esto, hay que tener en cuenta la escala, ya que las mujeres siguen gastando en promedio unos 250.000 dólares menos que los hombres.
 
-**Top Sellers**
+**Top Vendedores**
 
 Now lets switch gears and examine our top selling products. In this situation, we won't group by product ID since we want to see duplicates, just in case people are buying 2 or more quantities of the same product.
 
