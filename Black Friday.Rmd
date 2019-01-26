@@ -3,8 +3,8 @@ title: "Black Friday"
 authors: "Miquel Martorell"
 date: "15/01/2019"
 output:
-  word_document: default
   html_document: default
+  word_document: default
   pdf_document: default
 ---
 
