@@ -12,6 +12,30 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+**PREGUNTAS**
+
+Trabajo final de tecnología en R (formato markdown):
+
+(Restar 1 Millón y los datos estarán en el rango de 0 y 10 K.)
+
+1.- ¿Qué variables pueden ser factores?
+
+2.- ¿Se venden igual las mismas categorías?
+
+3.- ¿Los usuarios compran el mismo item?
+
+4.- Sistemas de recomendación
+
+5.- ¿Gastan más los hombres o las mujeres?
+
+6.- Gráfico bipartito entre productos y consumidores
+
+7.- Otros: Clustering, proyección de ventas, estimar el gasto futuro, deducir con una serie de datos si el consumidor es hombre o mujer.
+
+8.- Dividir los datos en conjunto de entrenamiento y prueba.
+
+Esta es la lluvia de ideas que se hizo en clase... el profe valora mucho la innovación y que hagas cosas originales que nos guste a nosotros.
+
 **Exploratory Data Analysis (EDA)**
 
 To begin, lets load the dataset that we wil be using for this Exploratory Data Analysis (EDA).
@@ -133,7 +157,7 @@ print(genderAverage)
 
 Here we see an interesting observation. Even though female shoppers make less purchases than males at this specific store, they seem to be purchasing almost as much on average as the male shoppers. This being said, scale needs to be taken into account because females on average are still spending about 250,000 less than males.
 
-** Top Sellers **
+**Top Sellers**
 
 Now lets switch gears and examine our top selling products. In this situation, we won't group by product ID since we want to see duplicates, just in case people are buying 2 or more quantities of the same product.
 
@@ -191,7 +215,7 @@ We can see that between the overall observation set, both purchasers of the best
 
 Now, let's move on and examine the Age variable.
 
-** Age **
+**Age**
 
 Lets begin examining Age by creating a table of each individual age group and their respective counts.
 
@@ -237,7 +261,7 @@ We can see that there is some deviation with the proportion of customers grouped
 
 Now that we have examined age, lets move to another variable.
 
-** City **
+**City**
 
 Let's create a table of each User_ID and their corresponding City_Category.
 
@@ -352,7 +376,7 @@ grid.arrange(city_count_purchases_vis,best_seller_city_vis, ncol = 2)
 
 An interesting revelation has been made! Although customers residing in City C purchase more of our "best seller" than City A + B, residents of City C fall behind City B in overall number of purchases.
 
-** Stay in Current City **
+**Stay in Current City**
 
 Lets now examine the distribution of customers who have lived in their city the longest.
 
