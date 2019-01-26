@@ -431,3 +431,224 @@ ggplot(data = stay_cities, aes(x = City_Category, y = n, fill = Stay_In_Current_
 
 Looking at this chart we can see the distribution of the total customer base and their respective city residences, split by the amount of time they have lived there. Here, we can notice that in every City_Category, the most common stay length seems to be 1 year.
 
+**Purchase**
+
+Now lets do some investigation regarding store customers and their purchases. We will start by computing the total purchase amount by user ID
+
+```{r}
+customers_total_purchase_amount = dataset %>%
+                                  group_by(User_ID) %>%
+                                  summarise(Purchase_Amount = sum(Purchase))
+head(customers_total_purchase_amount)
+```
+
+Now that we have grouped our purchases and grouped by User ID, we will sort and find our top spenders.
+
+```{r}
+customers_total_purchase_amount = arrange(customers_total_purchase_amount, desc((Purchase_Amount)))
+head(customers_total_purchase_amount)
+```
+
+Looks like User ID 1004277 is our top spender. Lets use summary() to see other facets of our total customer spending data.
+
+```{r}
+summary(customers_total_purchase_amount)
+```
+
+We can see an average total purchase amount of 851752, max total purchase amount of 10536783, min total purchase amount of 44108 and a median purchase amount of 512612.
+
+Lets plot a chart showing the distribution of purchase amounts to see if purchases are normally distributed or contain some skewness. A density plot will show us where the highest number of similar purchase amounts rests in accordance to the entire customer base. It is important to note that Density charts graph the expected probability of values, given data as input, and then plot a line surrounding those values (estimation).
+
+```{r}
+ggplot(customers_total_purchase_amount, aes(Purchase_Amount)) +
+       geom_density(adjust = 1) +
+       geom_vline(aes(xintercept=median(Purchase_Amount)),
+                  color="blue", linetype="dashed", size=1) +
+       geom_vline(aes(xintercept=mean(Purchase_Amount)),
+                  color="red", linetype="dashed", size=1) +
+       geom_text(aes(x=mean(Purchase_Amount), label=round(mean(Purchase_Amount)), y=1.2e-06), color = 'red', angle=360, size=4, vjust=3, hjust=-.1) +
+       geom_text(aes(x=median(Purchase_Amount), label=round(median(Purchase_Amount)), y=1.2e-06), color = 'blue', angle=360,msize=4, vjust=0, hjust=-.1) +
+       scale_x_continuous(name="Purchase Amount", limits=c(0, 7500000), breaks = seq(0,7500000, by = 1000000), expand = c(0,0)) +
+       scale_y_continuous(name="Density", limits=c(0, .00000125), labels = scientific, expand = c(0,0))
+```
+
+Here we are seeing a very right (positive) skewed density plot with a long tail. This means that there are quite a few values that sit higher than the mean and that the highest density of values isn't a standardly distributed series. We see that the largest density of purchases is around the 250000 mark.
+
+**Marital Status**
+
+Lets now examine the marital status of store customers.
+
+```{r}
+dataset_maritalStatus = dataset %>%
+                        select(User_ID, Marital_Status) %>%
+                        group_by(User_ID) %>%
+                        distinct()
+head(dataset_maritalStatus)
+```
+
+Note, we need to quickly change Marital_Status from a numeric variable to a categorical type.
+
+```{r}
+dataset_maritalStatus$Marital_Status = as.character(dataset_maritalStatus$Marital_Status)
+typeof(dataset_maritalStatus$Marital_Status)
+```
+
+If we look back at the variable descriptions of the dataset, we don't have a clear guide for marital status. In other cases, it would be best to reach out to the provider of the data to be completely sure of what the values in a column represent but in this case, we will assume that 1 = married and 0 = single.
+
+```{r}
+marital_vis = ggplot(data = dataset_maritalStatus) +
+                     geom_bar(mapping = aes(x = Marital_Status, y = ..count.., fill = Marital_Status)) +
+                     labs(title = 'Marital Status') +
+                     scale_fill_brewer(palette = 'Pastel2')
+print(marital_vis)
+```
+
+It looks like most of our shoppers happen to be single or unmarried. Similar to our investigation of age groups, we can look at the makeup of Marital_Status in each City_Category.
+
+```{r}
+dataset_maritalStatus = dataset_maritalStatus %>%
+                        full_join(customers_stay, by = 'User_ID') 
+head(dataset_maritalStatus)
+```
+
+```{r}
+maritalStatus_cities = dataset_maritalStatus %>%
+                       group_by(City_Category, Marital_Status) %>%
+                       tally()
+head(maritalStatus_cities)
+```
+
+```{r}
+ggplot(data = maritalStatus_cities, aes(x = City_Category, y = n, fill = Marital_Status)) + 
+       geom_bar(stat = "identity", color = 'black') + 
+       scale_fill_brewer(palette = 2) + 
+       labs(title = "City + Marital Status", 
+            y = "Total Count (Shoppers)", 
+            x = "City", 
+            fill = "Marital Status")
+```
+
+Here, we can see that out off all Cities, the highest proportion of single shoppers seems to be in City A. Now, lets investigate the Stay_in_Current_City distribution within each City_Category.
+
+```{r}
+Users_Age = dataset %>%
+            select(User_ID, Age) %>%
+            distinct()
+head(Users_Age)
+```
+
+```{r}
+dataset_maritalStatus = dataset_maritalStatus %>%
+                        full_join(Users_Age, by = 'User_ID')
+head(dataset_maritalStatus)
+```
+
+```{r}
+City_A = dataset_maritalStatus %>%
+         filter(City_Category == 'A')
+City_B = dataset_maritalStatus %>%
+         filter(City_Category == 'B')
+City_C = dataset_maritalStatus %>%
+         filter(City_Category == 'C')
+head(City_A)
+head(City_B)
+head(City_C)
+```
+
+```{r}
+City_A_stay_vis = ggplot(data = City_A, aes(x = Age, y = ..count.., fill = Age)) + 
+                         geom_bar(stat = 'count') +
+                         scale_fill_brewer(palette = 8) +
+                         theme(legend.position="none", axis.text = element_text(size = 6)) +
+                         labs(title = 'City A', y = 'Count', x = 'Age', fill = 'Age')
+City_B_stay_vis = ggplot(data = City_B, aes(x = Age, y = ..count.., fill = Age)) +
+                         geom_bar(stat = 'count') +
+                         scale_fill_brewer(palette = 9) +
+                         theme(legend.position="none", axis.text = element_text(size = 6)) +
+                         labs(title = 'City B', y = 'Count', x = 'Age', fill = 'Age')
+City_C_stay_vis = ggplot(data = City_C, aes(x = Age, y = ..count.., fill = Age)) +
+                         geom_bar(stat = 'count') +
+                         scale_fill_brewer(palette = 11) +
+                         theme(legend.position="none", axis.text = element_text(size = 6)) +
+                         labs(title = 'City C', y = 'Count', x = 'Age', fill = 'Age')
+grid.arrange(City_A_stay_vis, City_B_stay_vis, City_C_stay_vis, ncol = 3)
+```
+
+It looks as though City A has less shoppers living there over the age of 45 compared to the other cities. This could be a factor in the resulting levels of Marital_Status within each individual city.
+
+**Top Shoppers**
+
+Now, we will investigate who our top shoppers were on Black Friday.
+
+```{r}
+top_shoppers = dataset %>%
+               count(User_ID, sort = TRUE)
+head(top_shoppers)
+```
+
+Looks like User_ID 1001680 shows up the most on our master ledger of shopper data. Since each individual row represents a different transaction/product, it looks like this user made over 1000 total transactions! We can join together this top shoppers dataset with our total customer purchases dataset to see them combined.
+
+```{r}
+top_shoppers =  top_shoppers %>%
+                select(User_ID, n) %>%
+                left_join(customers_total_purchase_amount, Purchase_Amount, by = 'User_ID')
+head(top_shoppers)
+```
+
+Now that we have joined the two tables together, we can see that although User_ID 1001680 has the highest number of total purchases, User_ID 1004277 has the highest Purchase_Amount as identified in our earlier charts as well. From here, we can also compute the average Purchase_Amount for each user.
+
+```{r}
+top_shoppers = mutate(top_shoppers,
+               Average_Purchase_Amount = Purchase_Amount/n)
+head(top_shoppers)
+```
+
+Now, we can sort according to Average_Purchase_Amount to see which customers, on average, are spending the most.
+
+```{r}
+top_shoppers_averagePurchase = top_shoppers %>%
+                               arrange(desc(Average_Purchase_Amount))
+head(top_shoppers_averagePurchase)
+```
+
+Looks like User_ID 1005069 has the highest Average_Purchase_Amount and a total Purchase_Amount of 308454. User_ID 1003902 is right behind User_ID 1005069 in Average_Purchase_Amount, but has a much higher total Purchase_Amount of 1746284.
+
+**Occupation**
+
+The last thing we will analyze is the occupation of customers in our dataset.
+
+```{r}
+customers_Occupation =  dataset %>%
+                        select(User_ID, Occupation) %>%
+                        group_by(User_ID) %>%
+                        distinct() %>%
+                        left_join(customers_total_purchase_amount, Occupation, by = 'User_ID')
+head(customers_Occupation)
+```
+
+Now that we have our dataset necessary, we can group together the total Purchase_Amount for each Occupation identifier. We will then convert Occupation to a charater data type.
+
+```{r}
+totalPurchases_Occupation = customers_Occupation %>%
+                            group_by(Occupation) %>%
+                            summarise(Purchase_Amount = sum(Purchase_Amount)) %>%
+                            arrange(desc(Purchase_Amount))
+totalPurchases_Occupation$Occupation = as.character(totalPurchases_Occupation$Occupation)
+typeof(totalPurchases_Occupation$Occupation)
+head(totalPurchases_Occupation)
+```
+
+Now, lets plot each occupation and their total Purchase_Amount
+
+```{r}
+occupation = ggplot(data = totalPurchases_Occupation) +
+                    geom_bar(mapping = aes(x = reorder(Occupation, -Purchase_Amount), y = Purchase_Amount, fill = Occupation), stat = 'identity') +
+                    scale_x_discrete(name="Occupation", breaks = seq(0,20, by = 1), expand = c(0,0)) +
+                    scale_y_continuous(name="Purchase Amount ($)", expand = c(0,0), limits = c(0, 750000000)) +
+                    labs(title = 'Total Purchase Amount by Occupation') + 
+                    theme(legend.position="none")
+print(occupation)
+```
+
+Looks like customers labeled as Occupation 4 spent the most at our store on Black Friday, with customers of Occupation 0 + 7 closely behind. Here, if a key was given, we could use that information to classify our shoppers accordingly.
+
