@@ -1,0 +1,234 @@
+---
+title: "Black Friday"
+authors: "Miquel Martorell"
+date: "26/1/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Exploratory Data Analysis (EDA)**
+
+To begin, lets load the dataset that we wil be using for this Exploratory Data Analysis (EDA).
+
+```{r}
+dataset = read.csv("BlackFriday.csv")
+```
+
+Now, lets import the libraries we will be utilizing in this kernel.
+
+```{r}
+library(tidyverse)
+library(scales)
+library(arules)
+library(gridExtra)
+```
+
+The tidyverse package is what we will use for visualizing and exploring our dataset. It is knows for easy-to-read syntax and massive amounts of useful functions. The scales package will be used mainly to customize plot axis. Lastly, the arules package will be utilized in the final part of this kernel, Association Rule Learning and Apriori. Info regarding all packages used during this EDA is provided in the Works Cited section of this kernel.
+
+Lets start with a quick overview of the entire dataset.
+
+```{r}
+summary(dataset)
+head(dataset)
+```
+
+It looks like we have 12 different columns, each representing a corresponding variable below.
+
+User_ID: Unique identifier of shopper.
+Product_ID: Unique identifier of product. (No key given)
+Gender: Sex of shopper.
+Age: Age of shopper split into bins.
+Occupation: Occupation of shopper. (No key given)
+City_Category: Residence location of shopper. (No key given)
+Stay_In_Current_City_Years: Number of years stay in current city.
+Marital_Status: Marital status of shopper.
+Product_Category_1: Product category of purchase.
+Product_Category_2: Product may belong to other category.
+Product_Category_3: Product may belong to other category.
+Purchase: Purchase amount in dollars.
+If we look at the first few rows of our dataset, we can see that each row represents a different transaction, or item purchased by a specific customer. This will come into play later on when we group all transactions by a specific User_ID to get a sum of all purchases made by a single customer.
+
+One critique we can make regarding this dataset is that there isn't a key given regarding the different Product_IDs and the item they represent. (Ie. We can't attribute P00265242 to an item easily recognizable) In reality, we would want to have another dataset which provides the name of an Item and its Product_ID and then join it to our existing dataset. This won't necessarily affect our EDA, but would be more useful during our implementation of the Apriori algorithm and could make some parts of the EDA clearer to interpret.
+
+**Gender**
+
+To begin our exploration, lets examine the gender of shoppers at this store.
+
+Since each row represents an individual transaction, we must first group the data by User_ID to remove duplicates.
+
+```{r}
+dataset_gender = dataset %>%
+                 select(User_ID, Gender) %>%
+                 group_by(User_ID) %>%
+                 distinct()
+head(dataset_gender)
+summary(dataset_gender$Gender)
+```
+
+Now that we have the dataframe necessary to see each User_IDs corresponding gender and their total counts for reference, lets plot the distribution of gender across our dataset.
+
+```{r}
+options(scipen=10000)   # To remove scientific numbering
+genderDist  = ggplot(data = dataset_gender) +
+                geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
+                labs(title = 'Gender of Customers') + 
+                scale_fill_brewer(palette = 'PuBuGn')
+print(genderDist)
+```
+
+As we can see, there are quite a few more males than females shopping at our store on Black Friday. This gender split metric is helpful to retailers because some might want to modify their store layout, product selection, and other variables differently depending on the gender proportion of their shoppers.
+
+A study published in the Clothing and Textiles Research Journal writes,
+
+"Involvement, variety seeking, and physical environment of stores were selected as antecedents of shopping experience satisfaction....The structural model for female subjects confirmed the existence of the mediating role of hedonic shopping value in shopping satisfaction, whereas the model for male respondents did not." Chang, E., Burns, L. D., & Francis, S. K. (2004) (Abstract)
+Although this does not give direct insight into recommended actions for retail stores, it does display a difference in the value derived from shopping and its relationship to gender, which should be taken into account by retailers.
+
+To investigate further, lets compute the average spending amount as it relates to Gender. For easy interpretation and traceback we will create separate tables and then join them together.
+
+```{r}
+total_purchase_user = dataset %>%
+                      select(User_ID, Gender, Purchase) %>%
+                      group_by(User_ID) %>%
+                      arrange(User_ID) %>%
+                      summarise(Total_Purchase = sum(Purchase))
+user_gender = dataset %>%
+              select(User_ID, Gender) %>%
+              group_by(User_ID) %>%
+              arrange(User_ID) %>%
+              distinct()
+head(user_gender)
+head(total_purchase_user)
+```
+
+```{r}
+user_purchase_gender = full_join(total_purchase_user, user_gender, by = "User_ID")
+head(user_purchase_gender)
+```
+
+```{r}
+average_spending_gender = user_purchase_gender %>%
+                          group_by(Gender) %>%
+                          summarize(Purchase = sum(as.numeric(Total_Purchase)), 
+                                    Count = n(), 
+                                    Average = Purchase/Count)
+head(average_spending_gender)
+```
+
+We can see that that the average transaction for Females was 699054.00 and the average transaction for Males was 911963.20. Let visualize our results.
+
+```{r}
+genderAverage  = ggplot(data = average_spending_gender) +
+                        geom_bar(mapping = aes(x = Gender, y = Average, fill = Gender), stat = 'identity') +
+                        labs(title = 'Average Spending by Gender') +
+                        scale_fill_brewer(palette = 'PuBuGn')
+print(genderAverage)
+```
+
+Here we see an interesting observation. Even though female shoppers make less purchases than males at this specific store, they seem to be purchasing almost as much on average as the male shoppers. This being said, scale needs to be taken into account because females on average are still spending about 250,000 less than males.
+
+** Top Sellers **
+
+Now lets switch gears and examine our top selling products. In this situation, we won't group by product ID since we want to see duplicates, just in case people are buying 2 or more quantities of the same product.
+
+```{r}
+top_sellers = dataset %>%
+              count(Product_ID, sort = TRUE)
+top_5 = head(top_sellers, 5)
+top_5
+```
+
+Looks like our top 5 best sellers are (by product ID)
+
+* P00265242 = 1858
+* P00110742 = 1591
+* P00025442 = 1586
+* P00112142 = 1539
+* P00057642 = 1430
+
+Now that we have Identified our top 5 best selling products, lets examine the best selling product, P00265242.
+
+```{r}
+best_seller = dataset[dataset$Product_ID == 'P00265242', ]
+head(best_seller)
+```
+
+We can see that this product fits into Product_Category_1 = 5 and Product_Category_2 = 8. As mentioned in the introduction, it would be useful to have a key to reference the item name in order to determine what it is.
+
+Another interesting finding is that even though people are purchasing the same product, they are paying different prices. This could be due to various Black Friday promotions, discounts, or coupon codes. Otherwise, investigation would need to be done regarding the reason for different purchase prices of the same product between customers.
+
+Lets continue to analyze our best seller to see if any relationship to Gender exits.
+
+```{r}
+genderDist_bs  = ggplot(data = best_seller) +
+                 geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
+                 labs(title = 'Gender of Customers (Best Seller)') +
+                 scale_fill_brewer(palette = 'PuBuGn')
+print(genderDist_bs)
+```
+
+We see a similar distribution between genders to our overall dataset gender split - lets confirm.
+
+```{r}
+genderDist_bs_prop = ggplot(data = best_seller) + 
+                            geom_bar(fill = 'lightblue', mapping = aes(x = Gender, y = ..prop.., group = 1, fill = Gender)) +
+                            labs(title = 'Gender of Customers (Best Seller - Proportion)') +
+                            theme(plot.title = element_text(size=9.5))
+genderDist_prop = ggplot(data = dataset_gender) + 
+                         geom_bar(fill = "lightblue4", mapping = aes(x = Gender, y = ..prop.., group = 1)) +
+                         labs(title = 'Gender of Customers (Total Proportion)') +
+                         theme(plot.title = element_text(size=9.5)) 
+grid.arrange(genderDist_prop, genderDist_bs_prop, ncol=2)
+```
+
+We can see that between the overall observation set, both purchasers of the best seller and purchasers of all products are roughly ~25% female and ~75% male. A slight difference does exist but it seems like we can generally conclude that our best seller does not cater to a specific gender.
+
+Now, let's move on and examine the Age variable.
+
+** Age **
+
+Lets begin examining Age by creating a table of each individual age group and their respective counts.
+
+```{r}
+customers_age = dataset %>%
+                select(User_ID, Age) %>%
+                distinct() %>%
+                count(Age)
+customers_age
+```
+
+Here, we can see a dataset that shows the count of each Age category of customers at our store. Lets visualize this table.
+
+```{r}
+customers_age_vis = ggplot(data = customers_age) + 
+                           geom_bar(color = 'black', stat = 'identity', mapping = aes(x = Age, y = n, fill = Age)) +
+                           labs(title = 'Age of Customers') +
+                           theme(axis.text.x = element_text(size = 10)) +
+                           scale_fill_brewer(palette = 'Blues') +
+                           theme(legend.position="none")
+print(customers_age_vis)
+```
+
+We can also plot a similar chart depicting the distribution of age within our "best seller" category. This will show us if there is a specific age category that purchased the best selling product more than other shoppers.
+
+```{r}
+ageDist_bs  = ggplot(data = best_seller) +
+                     geom_bar(color = 'black', mapping = aes(x = Age, y = ..count.., fill = Age)) +
+                     labs(title = 'Age of Customers (Best Seller)') +
+                     theme(axis.text.x = element_text(size = 10)) +
+                     scale_fill_brewer(palette = 'GnBu') + 
+                     theme(legend.position="none")
+print(ageDist_bs)
+```
+
+It seems as though younger people (18-25 & 26-35) account for the highest number of purchases of the best selling product. Lets compare this observation to the overall dataset.
+
+```{r}
+grid.arrange(customers_age_vis, ageDist_bs, ncol=2)
+```
+
+We can see that there is some deviation with the proportion of customers grouped by age when comparing the best selling product to the overall dataset. It looks like older customers > Age 45 are buying the top seller slightly less than other products included in the overall dataset.
+
+Now that we have examined age, lets move to another variable.
