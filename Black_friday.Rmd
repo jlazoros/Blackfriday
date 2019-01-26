@@ -1,0 +1,11 @@
+---
+title: "Black Friday"
+author: "Miquel Martorell"
+date: "26/1/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
