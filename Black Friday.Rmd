@@ -44,7 +44,7 @@ Para empezar este análisis procedemos a cargar el conjunto de datos BlackFriday
 datos = read.csv("BlackFriday.csv")
 ```
 
-Importamos las librerías que vamos a utilizar en este kernel:
+Importamos las librerías que vamos a utilizar en este análisis de datos:
 
 ```{r message=F, warning=F, echo = F}
 library(tidyverse)
@@ -53,7 +53,7 @@ library(arules)
 library(gridExtra)
 ```
 
-El paquete "tidyverse" es el que usaremos para visualizar y explorar nuestro conjunto de datos. Es conocido por su sintaxis fácil de leer y su gran cantidad de funciones útiles. El paquete "scales" se utilizará principalmente para personalizar el eje del gráfico. Por último, el paquete "arules"" se utilizará en la parte final del análisis, Association Rule Learning y Apriori.
+El paquete "tidyverse" es el que usaremos para visualizar y explorar nuestro conjunto de datos. Es conocido por su sintaxis fácil de leer y su gran cantidad de funciones útiles. El paquete "scales" se utilizará principalmente para personalizar el eje del gráfico. *Por último, el paquete "arules"" se utilizará en la parte final del análisis, Association Rule Learning y Apriori.*
 
 Comencemos con una rápida visión general de todo el conjunto de datos:
 
@@ -83,7 +83,7 @@ Debemos recalcar que en este conjunto de datos no hay una clave dada con respect
 
 **Género**
 
-Para empezar nuestro análisis, vamos a examinar el género de los compradores en esta tienda. Dado que cada fila representa una transacción individual, primero debemos agrupar los datos por User_ID para eliminar los duplicados.
+Para empezar nuestro análisis, vamos a examinar el género de los compradores en esta tienda. Dado que cada fila representa una transacción individual, primero debemos agrupar los datos por User_ID para eliminar los duplicados:
 
 ```{r}
 datos_gender = datos %>%
@@ -94,7 +94,7 @@ head(datos_gender)
 summary(datos_gender$Gender)
 ```
 
-Ahora tenemos el conjunto de datos correctamente filtrado para ver el género de cada User_ID y sus totales como referencia. Procedemos a realizar un gráfico el cual representa la distribución de género a través de nuestro conjunto de datos.
+Ahora tenemos el conjunto de datos correctamente filtrado para ver el género de cada User_ID y sus totales como referencia. Procedemos a realizar un gráfico el cual representa la distribución de género a través de nuestro conjunto de datos:
 
 ```{r}
 options(scipen=10000)   # Para eliminar la numeración científica.
@@ -105,14 +105,9 @@ gender_dist  = ggplot(data = datos_gender) +
 print(gender_dist)
 ```
 
-As we can see, there are quite a few more males than females shopping at our store on Black Friday. This gender split metric is helpful to retailers because some might want to modify their store layout, product selection, and other variables differently depending on the gender proportion of their shoppers.
+Como podemos ver, hay bastantes más hombres que mujeres comprando en el Black Friday. Esta sencilla división de género podría ser útil para los minoristas porque algunos podrían querer modificar el diseño de su tienda, la selección de productos y otras variables de manera diferente dependiendo del porcentaje de género de sus compradores.  
 
-A study published in the Clothing and Textiles Research Journal writes,
-
-"Involvement, variety seeking, and physical environment of stores were selected as antecedents of shopping experience satisfaction....The structural model for female subjects confirmed the existence of the mediating role of hedonic shopping value in shopping satisfaction, whereas the model for male respondents did not." Chang, E., Burns, L. D., & Francis, S. K. (2004) (Abstract)
-Although this does not give direct insight into recommended actions for retail stores, it does display a difference in the value derived from shopping and its relationship to gender, which should be taken into account by retailers.
-
-To investigate further, lets compute the average spending amount as it relates to Gender. For easy interpretation and traceback we will create separate tables and then join them together.
+Para realizar un análisis más profundo, calculemos el importe promedio de gasto en relación al género. Para facilitar la interpretación y el seguimiento, crearemos tablas separadas y luego las uniremos:
 
 ```{r}
 total_purchase_user = datos %>%
@@ -143,17 +138,17 @@ average_spending_gender = user_purchase_gender %>%
 head(average_spending_gender)
 ```
 
-We can see that that the average transaction for Females was 699054.00 and the average transaction for Males was 911963.20. Let visualize our results.
+Podemos ver que el promedio de transacciones para las mujeres fue de 699.054,00 y el promedio de transacciones para los hombres fue de 911.963,20. Visualicemos nuestros resultados.
 
 ```{r}
-genderAverage  = ggplot(data = average_spending_gender) +
-                        geom_bar(mapping = aes(x = Gender, y = Average, fill = Gender), stat = 'identity') +
-                        labs(title = 'Average Spending by Gender') +
-                        scale_fill_brewer(palette = 'PuBuGn')
-print(genderAverage)
+gender_average  = ggplot(data = average_spending_gender) +
+                         geom_bar(mapping = aes(x = Gender, y = Average, fill = Gender), stat = 'identity') +
+                         labs(title = 'Gasto Promedio Por género') +
+                         scale_fill_brewer(palette = 'PuBuGn')
+print(gender_average)
 ```
 
-Here we see an interesting observation. Even though female shoppers make less purchases than males at this specific store, they seem to be purchasing almost as much on average as the male shoppers. This being said, scale needs to be taken into account because females on average are still spending about 250,000 less than males.
+Aquí podemos ver una observación interesante. Aunque las mujeres hacen menos compras que los hombres, parecen estar comprando casi tanto en promedio como los hombres. Dicho esto, hay que tener en cuenta la escala, ya que las mujeres siguen gastando en promedio unos 250.000 dólares menos que los hombres.
 
 **Top Sellers**
 
