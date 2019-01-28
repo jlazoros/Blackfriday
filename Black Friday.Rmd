@@ -62,6 +62,13 @@ summary(datos)
 head(datos)
 ```
 
+Vamos a restar 1.000.000 a la columna User_ID para que estos datos estén en el rango [0-10.000]
+
+```{r}
+datos[["User_ID"]] = datos[["User_ID"]]-1000000
+head(datos)
+```
+
 Tenemos 12 columnas diferentes, cada una de las cuales representa una variable, las cuales procedemos a describir a continuación:
 
 * User_ID: Identificador único del comprador.
@@ -150,9 +157,9 @@ print(gender_average)
 
 Aquí podemos ver una observación interesante. Aunque las mujeres hacen menos compras que los hombres, parecen estar comprando casi tanto en promedio como los hombres. Dicho esto, hay que tener en cuenta la escala, ya que las mujeres siguen gastando en promedio unos 250.000 dólares menos que los hombres.
 
-**Top Vendedores**
+**Top Sellers**
 
-Now lets switch gears and examine our top selling products. In this situation, we won't group by product ID since we want to see duplicates, just in case people are buying 2 or more quantities of the same product.
+Ahora vamos a examinar nuestros productos más vendidos. En esta situación, no agruparemos por ID de producto ya que queremos ver duplicados, por si acaso la gente está comprando 2 o más cantidades del mismo producto.
 
 ```{r}
 top_sellers = datos %>%
@@ -161,7 +168,7 @@ top_5 = head(top_sellers, 5)
 top_5
 ```
 
-Looks like our top 5 best sellers are (by product ID)
+Nuestros 5 productos más vendidos son (por ID del producto):
 
 * P00265242 = 1858
 * P00110742 = 1591
@@ -169,18 +176,18 @@ Looks like our top 5 best sellers are (by product ID)
 * P00112142 = 1539
 * P00057642 = 1430
 
-Now that we have Identified our top 5 best selling products, lets examine the best selling product, P00265242.
+Ahora que hemos identificado nuestros 5 productos más vendidos, vamos a examinar el producto más vendido, P00265242.
 
 ```{r}
 best_seller = datos[datos$Product_ID == 'P00265242', ]
 head(best_seller)
 ```
 
-We can see that this product fits into Product_Category_1 = 5 and Product_Category_2 = 8. As mentioned in the introduction, it would be useful to have a key to reference the item name in order to determine what it is.
+Podemos ver que este producto encaja en Product_Category_1 = 5 y Product_Category_2 = 8. Como se mencionó en la introducción, sería útil tener una clave para hacer referencia al nombre del artículo con el fin de determinar qué es.
 
-Another interesting finding is that even though people are purchasing the same product, they are paying different prices. This could be due to various Black Friday promotions, discounts, or coupon codes. Otherwise, investigation would need to be done regarding the reason for different purchase prices of the same product between customers.
+Otro hallazgo interesante es que aunque la gente está comprando el mismo producto, están pagando precios diferentes. Esto puede deberse a varias promociones, descuentos o códigos de cupones del Black Friday. De lo contrario, habría que investigar la razón de que los precios de compra del mismo producto difieran entre los clientes.
 
-Lets continue to analyze our best seller to see if any relationship to Gender exits.
+Continuemos analizando nuestro best seller para ver si existe alguna relación con el género.
 
 ```{r}
 gender_dist_bs  = ggplot(data = best_seller) +
@@ -190,7 +197,7 @@ gender_dist_bs  = ggplot(data = best_seller) +
 print(gender_dist_bs)
 ```
 
-We see a similar distribution between genders to our overall datos gender split - lets confirm.
+Observamos una distribución similar entre los géneros a nuestra división general de datos por género.
 
 ```{r}
 gender_dist_bs_prop = ggplot(data = best_seller) + 
@@ -204,13 +211,13 @@ gender_dist_prop = ggplot(data = datos_gender) +
 grid.arrange(gender_dist_prop, gender_dist_bs_prop, ncol=2)
 ```
 
-We can see that between the overall observation set, both purchasers of the best seller and purchasers of all products are roughly ~25% female and ~75% male. A slight difference does exist but it seems like we can generally conclude that our best seller does not cater to a specific gender.
+Podemos ver que entre el conjunto de observaciones generales, tanto los compradores de los productos más vendidos como los compradores de todos los productos son aproximadamente ~25% mujeres y ~75% hombres. Existe una ligera diferencia, pero parece que en general podemos concluir que nuestro best seller no atiende a un género específico.
 
-Now, let's move on and examine the Age variable.
+Ahora, sigamos adelante y examinemos la variable Edad.
 
-**Age**
+**Edad**
 
-Lets begin examining Age by creating a table of each individual age group and their respective counts.
+Comencemos a examinar la edad creando una tabla de cada grupo de edad individual y sus respectivos recuentos.
 
 ```{r}
 customers_age = datos %>%
@@ -220,7 +227,7 @@ customers_age = datos %>%
 customers_age
 ```
 
-Here, we can see a datos that shows the count of each Age category of customers at our store. Lets visualize this table.
+Aquí podemos ver un dato que muestra el recuento de cada categoría de edad de los clientes. Vamos a visualizar esta tabla.
 
 ```{r}
 customers_age_vis = ggplot(data = customers_age) + 
@@ -232,7 +239,7 @@ customers_age_vis = ggplot(data = customers_age) +
 print(customers_age_vis)
 ```
 
-We can also plot a similar chart depicting the distribution of age within our "best seller" category. This will show us if there is a specific age category that purchased the best selling product more than other shoppers.
+También podemos trazar un gráfico similar que represente la distribución de la edad dentro de nuestra categoría de "best seller". Esto nos mostrará si hay una categoría de edad específica que compró el producto más vendido.
 
 ```{r}
 ageDist_bs  = ggplot(data = best_seller) +
@@ -244,19 +251,19 @@ ageDist_bs  = ggplot(data = best_seller) +
 print(ageDist_bs)
 ```
 
-It seems as though younger people (18-25 & 26-35) account for the highest number of purchases of the best selling product. Lets compare this observation to the overall datos.
+Parece que los jóvenes (18-25 años y 26-35 años) son los que más compran el producto más vendido. Comparemos esta observación con los datos generales.
 
 ```{r}
 grid.arrange(customers_age_vis, ageDist_bs, ncol=2)
 ```
 
-We can see that there is some deviation with the proportion of customers grouped by age when comparing the best selling product to the overall datos. It looks like older customers > Age 45 are buying the top seller slightly less than other products included in the overall datos.
+Podemos ver que hay alguna desviación con la proporción de clientes agrupados por edad al comparar el producto más vendido con los datos globales. Parece que los clientes mayores de 45 años compran el top seller un poco menos que otros productos incluidos en los datos generales.
 
-Now that we have examined age, lets move to another variable.
+Ahora que hemos examinado la edad, vamos a pasar a otra variable, la variable ciudad.
 
-**City**
+**Ciudad**
 
-Let's create a table of each User_ID and their corresponding City_Category.
+Vamos a crear una tabla de cada User_ID y su correspondiente City_Category.
 
 ```{r}
 customers_location =  datos %>%
@@ -274,7 +281,7 @@ customers_location_vis = ggplot(data = customers_location) +
 print(customers_location_vis)
 ```
 
-We can see that most of our customers live in City C. Now, we can compute the total purchase amount by City to see the which city's customers spent the most at our store.
+Podemos ver que la mayoría de nuestros clientes viven en la Ciudad C. Ahora, podemos calcular la cantidad total de compra por Ciudad para ver qué clientes de la ciudad gastaron más.
 
 ```{r}
 purchases_city = datos %>%
@@ -285,9 +292,9 @@ purchases_city_1000s = purchases_city %>%
 purchases_city_1000s
 ```
 
-In order to work with larger numbers, we divided the Purchases column/1000. This is a common practice within the business and acounting world, and it makes large numbers easier to read and chart.
+Para trabajar con números grandes, dividimos la columna Compras entre 1000. Esta es una práctica común dentro del mundo de los negocios y de la contabilidad, y hace que los grandes números sean más fáciles de leer y graficar.
 
-Now that we have our table, lets visualize our results.
+Ahora que tenemos nuestra tabla, visualicemos nuestros resultados.
 
 ```{r}
 purchaseCity_vis = ggplot(data = purchases_city_1000s, aes(x = City_Category, y = purchasesThousands, fill = City_Category)) +
@@ -302,11 +309,11 @@ print(purchaseCity_vis)
 grid.arrange(customers_location_vis, purchaseCity_vis, ncol=2)
 ```
 
-Here we can see that customers from City C were the most frequent shoppers at our store on Black Friday but Customers from City B had the highest amount of total purchases.
+Aquí podemos ver que los clientes de la Ciudad C fueron los compradores más frecuentes durante el Black Friday, pero los clientes de la Ciudad B tuvieron la mayor cantidad de compras totales.
 
-Let's continue to investigate and try to determine the reason for this observation.
+Continuemos investigando e intentemos determinar la razón de esta observación.
 
-Lets find how many purchases were made by customers from each city. First, we will get the total number of purchases for each corresponding User_ID.
+Averigüemos cuántas compras fueron hechas por los clientes de cada ciudad. En primer lugar, obtendremos el número total de compras para cada ID de usuario correspondiente.
 
 ```{r}
 customers = datos %>%
@@ -315,7 +322,7 @@ customers = datos %>%
 head(customers)
 ```
 
-This tells us how many times a certain user made a purchase. To dive deeper lets compute the total purchase amount for each user, then join it with the other table
+Esto nos dice cuántas veces un determinado usuario hizo una compra. Para profundizar un poco más, calcularemos el importe total de la compra de cada usuario y luego lo uniremos a la otra tabla.
 
 ```{r}
 customers_City =  datos %>%
@@ -345,9 +352,11 @@ print(city_count_purchases_vis)
 grid.arrange(purchaseCity_vis, city_count_purchases_vis, ncol = 2)
 ```
 
-One inference we can make from these charts is that customers from City B are simply making more purchases than residence of City A + City C, and not necessarily buying more expensive products. We can make this assumption due to the fact that the "Total Count of Purchases" chart has a very similar appearance to the "Total Customer Purchase Amount" chart. If it were the other case, then customers from City B would most likely have a lower count of total purchases corresponding to a higher total purchase amount.
+Una afirmación que podemos realizar de estos gráficos es que los clientes de la Ciudad B simplemente están haciendo más compras que los clientes de la Ciudad A + clientes de la Ciudad C, y no necesariamente comprando productos más caros.
 
-Now, since we have identified that the purchase counts across City_Category follow a similar distribution to total purchase amount, lets examine the distribution of our best selling product (P00265242) within each City_Category.
+Podemos hacer esta suposición debido al hecho de que el gráfico del "Total de Compras" tiene un aspecto muy similar al gráfico del "Total de Compras de Clientes". Si fuera el otro caso, lo más probable es que los clientes de la Ciudad B tuvieran un recuento más bajo de las compras totales, lo que corresponde a una mayor cantidad total de compras.
+
+Ahora, ya que hemos identificado que las cuentas de compra a través de City_Category siguen una distribución similar a la cantidad total de compra, vamos a examinar la distribución de nuestro producto más vendido (P00265242) dentro de cada City_Category.
 
 ```{r}
 head(best_seller)
@@ -367,11 +376,11 @@ best_seller_city_vis = ggplot(data = best_seller_city, aes(x = City_Category, y 
 grid.arrange(city_count_purchases_vis,best_seller_city_vis, ncol = 2)
 ```
 
-An interesting revelation has been made! Although customers residing in City C purchase more of our "best seller" than City A + B, residents of City C fall behind City B in overall number of purchases.
+Aunque los clientes que residen en la Ciudad C compran más de nuestros "best seller" que la Ciudad A + B, los residentes de la Ciudad C se quedan atrás de la Ciudad B en el número total de compras.
 
-**Stay in Current City**
+**Estancia en la ciudad actual**
 
-Lets now examine the distribution of customers who have lived in their city the longest.
+Examinemos ahora la distribución de los clientes que han vivido más tiempo en su ciudad.
 
 ```{r}
 customers_stay = datos %>%
@@ -381,9 +390,9 @@ customers_stay = datos %>%
 head(customers_stay)
 ```
 
-Now that we have our datos in order, we can plot and explore.
+Ahora que tenemos los datos en orden, podemos trazar y explorar.
 
-Lets see where most of our customers are living.
+Veamos dónde viven la mayoría de nuestros clientes.
 
 ```{r}
 residence = customers_stay %>%
@@ -392,7 +401,7 @@ residence = customers_stay %>%
 head(residence)
 ```
 
-Looks like most of our customers are living in City C. Now, lets investigate further.
+Parece que la mayoría de nuestros clientes viven en la Ciudad C.
 
 ```{r}
 customers_stay_vis = ggplot(data = customers_stay, aes(x = Stay_In_Current_City_Years, y = ..count.., fill = Stay_In_Current_City_Years)) +
@@ -402,7 +411,7 @@ customers_stay_vis = ggplot(data = customers_stay, aes(x = Stay_In_Current_City_
 print(customers_stay_vis)
 ```
 
-It looks like most of our customers have only been living in their respective cities for 1 year. In order to see a better distribution, lets make a stacked bar chart according to each City_Category.
+Parece que la mayoría de nuestros clientes sólo han vivido en sus respectivas ciudades durante un año. Para ver una mejor distribución, hagamos un gráfico de barras apiladas de acuerdo a cada Ciudad_Categoría.
 
 ```{r}
 stay_cities = customers_stay %>%
@@ -422,11 +431,11 @@ ggplot(data = stay_cities, aes(x = City_Category, y = n, fill = Stay_In_Current_
             fill = "Stay Years")
 ```
 
-Looking at this chart we can see the distribution of the total customer base and their respective city residences, split by the amount of time they have lived there. Here, we can notice that in every City_Category, the most common stay length seems to be 1 year.
+En este gráfico podemos ver la distribución de la base total de clientes y sus respectivas ciudades, dividida por la cantidad de tiempo que han vivido allí. Aquí, podemos notar que en cada Ciudad_Categoría, la duración de la estancia más común parece ser de 1 año.
 
-**Purchase**
+**Compras**
 
-Now lets do some investigation regarding store customers and their purchases. We will start by computing the total purchase amount by user ID
+Vamos a hacer algunas investigaciones con respecto a los clientes y sus compras. Comenzaremos por calcular el monto total de la compra por identificación de usuario.
 
 ```{r}
 customers_total_purchase_amount = datos %>%
@@ -435,22 +444,22 @@ customers_total_purchase_amount = datos %>%
 head(customers_total_purchase_amount)
 ```
 
-Now that we have grouped our purchases and grouped by User ID, we will sort and find our top spenders.
+Ahora que hemos agrupado nuestras compras y agrupado por ID de usuario, ordenaremos y encontraremos a los que más gasten.
 
 ```{r}
 customers_total_purchase_amount = arrange(customers_total_purchase_amount, desc((Purchase_Amount)))
 head(customers_total_purchase_amount)
 ```
 
-Looks like User ID 1004277 is our top spender. Lets use summary() to see other facets of our total customer spending data.
+Parece que el ID de usuario 1004277 es el más gastador. Utilicemos summary() para ver otras facetas de nuestros datos de gasto total de clientes.
 
 ```{r}
 summary(customers_total_purchase_amount)
 ```
 
-We can see an average total purchase amount of 851752, max total purchase amount of 10536783, min total purchase amount of 44108 and a median purchase amount of 512612.
+Podemos ver una cantidad total de compra promedio de 851752, una cantidad total de compra máxima de 10536783, una cantidad total de compra mínima de 44108 y una cantidad de compra media de 512612.
 
-Lets plot a chart showing the distribution of purchase amounts to see if purchases are normally distributed or contain some skewness. A density plot will show us where the highest number of similar purchase amounts rests in accordance to the entire customer base. It is important to note that Density charts graph the expected probability of values, given data as input, and then plot a line surrounding those values (estimation).
+Vamos a trazar un gráfico que muestre la distribución de los montos de compra para ver si las compras se distribuyen normalmente o si contienen alguna asimetría. Un diagrama de densidad nos mostrará dónde se encuentra el mayor número de cantidades de compra similares de acuerdo con toda la base de clientes. Es importante notar que las tablas de densidad representan la probabilidad esperada de los valores, dados los datos como entrada, y luego trazan una línea alrededor de esos valores (estimación).
 
 ```{r}
 ggplot(customers_total_purchase_amount, aes(Purchase_Amount)) +
@@ -465,11 +474,11 @@ ggplot(customers_total_purchase_amount, aes(Purchase_Amount)) +
        scale_y_continuous(name="Density", limits=c(0, .00000125), labels = scientific, expand = c(0,0))
 ```
 
-Here we are seeing a very right (positive) skewed density plot with a long tail. This means that there are quite a few values that sit higher than the mean and that the highest density of values isn't a standardly distributed series. We see that the largest density of purchases is around the 250000 mark.
+Aquí estamos viendo un diagrama de densidad sesgado muy a la derecha (positivo) con una larga cola. Esto significa que hay bastantes valores que se sitúan por encima de la media y que la mayor densidad de valores no es una serie distribuida de forma estándar. Vemos que la mayor densidad de compras se sitúa en torno a los 2.500.000 dólares.
 
-**Marital Status**
+**Estado Civil**
 
-Lets now examine the marital status of store customers.
+Examinemos ahora el estado civil de los clientes de la tienda.
 
 ```{r}
 datos_maritalStatus = datos %>%
@@ -479,14 +488,14 @@ datos_maritalStatus = datos %>%
 head(datos_maritalStatus)
 ```
 
-Note, we need to quickly change Marital_Status from a numeric variable to a categorical type.
+Para empezar necesitamos cambiar el tipo de la variable (numérica) a un tipo categórica.
 
 ```{r}
 datos_maritalStatus$Marital_Status = as.character(datos_maritalStatus$Marital_Status)
 typeof(datos_maritalStatus$Marital_Status)
 ```
 
-If we look back at the variable descriptions of the datos, we don't have a clear guide for marital status. In other cases, it would be best to reach out to the provider of the data to be completely sure of what the values in a column represent but in this case, we will assume that 1 = married and 0 = single.
+Si echamos la vista atrás a las descripciones variables de los datos, no tenemos una guía clara del estado civil. En este caso, asumiremos que 1 = casado y 0 = soltero.
 
 ```{r}
 marital_vis = ggplot(data = datos_maritalStatus) +
@@ -496,7 +505,7 @@ marital_vis = ggplot(data = datos_maritalStatus) +
 print(marital_vis)
 ```
 
-It looks like most of our shoppers happen to be single or unmarried. Similar to our investigation of age groups, we can look at the makeup of Marital_Status in each City_Category.
+Parece que la mayoría de nuestros compradores son solteros. De manera similar a nuestra investigación de los grupos de edad, podemos ver la composición del Estado_Matrimonial en cada Categoría_Ciudad.
 
 ```{r}
 datos_maritalStatus = datos_maritalStatus %>%
@@ -521,7 +530,7 @@ ggplot(data = maritalStatus_cities, aes(x = City_Category, y = n, fill = Marital
             fill = "Marital Status")
 ```
 
-Here, we can see that out off all Cities, the highest proportion of single shoppers seems to be in City A. Now, lets investigate the Stay_in_Current_City distribution within each City_Category.
+Aquí, podemos ver que fuera de todas las ciudades, la mayor proporción de compradores individuales parece estar en la Ciudad A. Ahora, investiguemos la distribución de Stay_in_Current_City dentro de cada Ciudad_Categoría.
 
 ```{r}
 Users_Age = datos %>%
@@ -567,11 +576,11 @@ City_C_stay_vis = ggplot(data = City_C, aes(x = Age, y = ..count.., fill = Age))
 grid.arrange(City_A_stay_vis, City_B_stay_vis, City_C_stay_vis, ncol = 3)
 ```
 
-It looks as though City A has less shoppers living there over the age of 45 compared to the other cities. This could be a factor in the resulting levels of Marital_Status within each individual city.
+Parece que la ciudad A tiene menos compradores mayores de 45 años que las otras ciudades. Esto podría ser un factor en los niveles resultantes de Estado_Matrimonial dentro de cada ciudad.
 
 **Top Shoppers**
 
-Now, we will investigate who our top shoppers were on Black Friday.
+Ahora, investigaremos quiénes fueron nuestros principales compradores durante el Black Friday.
 
 ```{r}
 top_shoppers = datos %>%
@@ -579,7 +588,7 @@ top_shoppers = datos %>%
 head(top_shoppers)
 ```
 
-Looks like User_ID 1001680 shows up the most on our master ledger of shopper data. Since each individual row represents a different transaction/product, it looks like this user made over 1000 total transactions! We can join together this top shoppers datos with our total customer purchases datos to see them combined.
+Parece que User_ID 1001680 es el que más aparece. Cada línea individual representa una transacción/producto diferente, por lo que este usuario hizo más de 1.000 transacciones totales. Podemos unir estos datos de los mejores compradores con los datos de compras totales de clientes para verlos combinados conjuntamente.
 
 ```{r}
 top_shoppers =  top_shoppers %>%
@@ -588,7 +597,7 @@ top_shoppers =  top_shoppers %>%
 head(top_shoppers)
 ```
 
-Now that we have joined the two tables together, we can see that although User_ID 1001680 has the highest number of total purchases, User_ID 1004277 has the highest Purchase_Amount as identified in our earlier charts as well. From here, we can also compute the average Purchase_Amount for each user.
+Ahora que hemos unido las dos tablas, podemos ver que aunque User_ID 1001680 tiene el mayor número de compras totales, User_ID 1004277 tiene la mayor cantidad de compra identificada en nuestros gráficos anteriores también. A partir de aquí, también podemos calcular el promedio de la cantidad_compra para cada usuario.
 
 ```{r}
 top_shoppers = mutate(top_shoppers,
@@ -596,7 +605,7 @@ top_shoppers = mutate(top_shoppers,
 head(top_shoppers)
 ```
 
-Now, we can sort according to Average_Purchase_Amount to see which customers, on average, are spending the most.
+Clasificamos de acuerdo a la Cantidad_de_Compra_Promedio para ver qué clientes, en promedio, están gastando más.
 
 ```{r}
 top_shoppers_averagePurchase = top_shoppers %>%
@@ -604,11 +613,11 @@ top_shoppers_averagePurchase = top_shoppers %>%
 head(top_shoppers_averagePurchase)
 ```
 
-Looks like User_ID 1005069 has the highest Average_Purchase_Amount and a total Purchase_Amount of 308454. User_ID 1003902 is right behind User_ID 1005069 in Average_Purchase_Amount, but has a much higher total Purchase_Amount of 1746284.
+Parece que User_ID 1005069 tiene la cantidad de compra promedio más alta y una cantidad total de compra de 308454. User_ID 1003902 está justo detrás de User_ID 1005069 en Average_Purchase_Amount, pero tiene una cantidad total de compra mucho mayor de 1746284.
 
-**Occupation**
+**Empleo**
 
-The last thing we will analyze is the occupation of customers in our datos.
+Lo último que analizaremos es la ocupación de los clientes en nuestros datos.
 
 ```{r}
 customers_Occupation =  datos %>%
@@ -619,7 +628,7 @@ customers_Occupation =  datos %>%
 head(customers_Occupation)
 ```
 
-Now that we have our datos necessary, we can group together the total Purchase_Amount for each Occupation identifier. We will then convert Occupation to a charater data type.
+Ahora que tenemos los datos necesarios, podemos agrupar el importe total de la compra para cada identificador de ocupación. A continuación, convertiremos la Ocupación en un tipo de datos carácter.
 
 ```{r}
 totalPurchases_Occupation = customers_Occupation %>%
@@ -631,7 +640,7 @@ typeof(totalPurchases_Occupation$Occupation)
 head(totalPurchases_Occupation)
 ```
 
-Now, lets plot each occupation and their total Purchase_Amount
+Ahora, vamos a trazar cada ocupación y su total Purchase_Amount.
 
 ```{r}
 occupation = ggplot(data = totalPurchases_Occupation) +
@@ -643,5 +652,5 @@ occupation = ggplot(data = totalPurchases_Occupation) +
 print(occupation)
 ```
 
-Looks like customers labeled as Occupation 4 spent the most at our store on Black Friday, with customers of Occupation 0 + 7 closely behind. Here, if a key was given, we could use that information to classify our shoppers accordingly.
+Parece que los clientes etiquetados como Ocupación 4, Ocupación 0 y Ocupación 7 pasaron la mayor parte del tiempo en el Black Friday, con los clientes de Ocupación 1 ya muy por detrás.
 
