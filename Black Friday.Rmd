@@ -1,16 +1,29 @@
 ---
 title: "Black Friday"
-authors: "Miquel Martorell"
-date: "15/01/2019"
+date: "05/01/2019"
 output:
-  html_document: default
-  word_document: default
-  pdf_document: default
+  html_document:
+    fig_width: 10
+    fig_height: 7
+    toc: yes
+    number_sections : yes
+    code_folding: show
 ---
+
+<style>
+body {
+text-align: justify}
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+AUTORES:
+
+* Reinier Mujica
+* Jorge Lazo Rosado
+* Miquel Martorell
 
 **PREGUNTAS**
 
@@ -36,7 +49,15 @@ Trabajo final de tecnología en R (formato markdown):
 
 Esta es la lluvia de ideas que se hizo en clase... el profe valora mucho la innovación y que hagas cosas originales que nos guste a nosotros.
 
-**ANÁLISIS DE LOS DATOS BLACK FRIDAY**
+# Introducción.
+
+<center><img src="https://lapublicidad.net/wp-content/uploads/2018/11/black.png"></center>
+
+Según el autor de esta recopilación de datos (Mehdi Dagdoug), tenemos un conjunto de datos de 550.000 observaciones sobre el Black Friday en una tienda minorista, el cual contiene diferentes tipos de variables numéricas o categóricas.
+
+La tienda quiere conocer mejor el comportamiento de compra de los clientes a la hora de decantarse por un producto u otro. Procederemos a analizar las diferentes variables de este conjunto de datos y, finalmente, predecir mediante una regresión lineal la variable dependiente (el monto de la compra) con la ayuda de la información contenida en las variables explicativas.
+
+Además, este conjunto de datos también es particularmente conveniente para la agrupación en clústeres, tal vez para encontrar diferentes grupos de consumidores dentro de él.
 
 Para empezar este análisis procedemos a cargar el conjunto de datos BlackFriday.csv:
 
@@ -44,7 +65,7 @@ Para empezar este análisis procedemos a cargar el conjunto de datos BlackFriday
 datos = read.csv("BlackFriday.csv")
 ```
 
-Importamos las librerías que vamos a utilizar en este análisis de datos:
+# Librerias Utilizadas.
 
 ```{r message=F, warning=F, echo = F}
 library(tidyverse)
@@ -55,18 +76,20 @@ library(gridExtra)
 
 El paquete "tidyverse" es el que usaremos para visualizar y explorar nuestro conjunto de datos. Es conocido por su sintaxis fácil de leer y su gran cantidad de funciones útiles. El paquete "scales" se utilizará principalmente para personalizar el eje del gráfico. *Por último, el paquete "arules"" se utilizará en la parte final del análisis, Association Rule Learning y Apriori.*
 
+# Análisis Preliminar.
+
 Comencemos con una rápida visión general de todo el conjunto de datos:
 
 ```{r}
 summary(datos)
-head(datos)
+glimpse(datos)
 ```
 
-Vamos a restar 1.000.000 a la columna User_ID para que estos datos estén en el rango [0-10.000]
+Vamos a restar 1.000.000 a la columna User_ID para que estos datos estén en el rango [0-10.000].
 
 ```{r}
 datos[["User_ID"]] = datos[["User_ID"]]-1000000
-head(datos)
+glimpse(datos)
 ```
 
 Tenemos 12 columnas diferentes, cada una de las cuales representa una variable, las cuales procedemos a describir a continuación:
@@ -84,13 +107,13 @@ Tenemos 12 columnas diferentes, cada una de las cuales representa una variable, 
 * Product_Category_3: Categoría 3 de producto de la compra.
 * Purchase: Importe de la compra en dólares.
 
-Si observamos las primeras filas de nuestro conjunto de datos, podemos ver que cada fila representa una transacción diferente, o un artículo comprado por un cliente específico. Más adelante cuando agrupemos todas las transacciones por un usuario específico obtendremos una suma de todas las compras realizadas por un solo cliente.
+Si observamos las primeras filas de nuestro conjunto de datos, podemos ver que cada fila representa una transacción diferente, o un artículo comprado por un cliente en concreto. Más adelante, cuando agrupemos todas las transacciones por un usuario en concreto, obtendremos una suma de todas las compras realizadas por un solo cliente.
 
-Debemos recalcar que en este conjunto de datos no hay una clave dada con respecto a los diferentes Product_IDs y al ítem que representan. Por ejemplo, no podemos atribuir P00265242 a un elemento fácilmente reconocible. En realidad, nos gustaría tener otro conjunto de datos que proporcione el nombre de un elemento y su Product_ID y luego unirlo a nuestro conjunto de datos existente. *Esto no afectará necesariamente a nuestro análisis, pero sería más útil durante nuestra implementación del algoritmo Apriori y podría hacer que algunas partes de la EDA sean más claras de interpretar.*
+Debemos recalcar que en este conjunto de datos no hay una clave dada con respecto a los diferentes Product_IDs y al artículo/producto que representan. Por ejemplo, no podemos atribuir P00265242 a un producto reconocible. En realidad, deberíamos tener otro conjunto de datos el cual nos proporcionase el nombre de un prodcuto y su Product_ID para así unirlo todo en nuestro conjunto de datos existente. *Esto no afectará necesariamente a nuestro análisis, pero sería más útil durante nuestra implementación del algoritmo Apriori y podría hacer que algunas partes de la EDA sean más claras de interpretar.*
 
-**Género**
+# Análisis Variable Género Clientes.
 
-Para empezar nuestro análisis, vamos a examinar el género de los compradores en esta tienda. Dado que cada fila representa una transacción individual, primero debemos agrupar los datos por User_ID para eliminar los duplicados:
+Para empezar nuestro verdadero análisis, vamos a examinar la variable género de los compradores en esta tienda. Dado que cada fila representa una transacción individual, primero debemos agrupar los datos por User_ID para eliminar los duplicados:
 
 ```{r}
 datos_gender = datos %>%
@@ -104,15 +127,15 @@ summary(datos_gender$Gender)
 Ahora tenemos el conjunto de datos correctamente filtrado para ver el género de cada User_ID y sus totales como referencia. Procedemos a realizar un gráfico el cual representa la distribución de género a través de nuestro conjunto de datos:
 
 ```{r}
-options(scipen=10000)   # Para eliminar la numeración científica.
+options(scipen=10000)   # Eliminamos la numeración científica.
 gender_dist  = ggplot(data = datos_gender) +
                geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
-               labs(title = 'Género Clientes') + 
+               labs(title = 'Género Clientes', x = 'Género', y = 'Nº Clientes', fill = 'Género') + 
                scale_fill_brewer(palette = 'PuBuGn')
 print(gender_dist)
 ```
 
-Como podemos ver, hay bastantes más hombres que mujeres comprando en el Black Friday. Esta sencilla división de género podría ser útil para los minoristas porque algunos podrían querer modificar el diseño de su tienda, la selección de productos y otras variables de manera diferente dependiendo del porcentaje de género de sus compradores.  
+Como podemos ver, hay bastantes más hombres que mujeres comprando en esta tienda durante el Black Friday. Esta sencilla división de género podría ser útil para los minoristas porque algunos podrían querer modificar el diseño de su tienda, la selección de productos y otras variables de manera diferente dependiendo del porcentaje de género de sus compradores.
 
 Para realizar un análisis más profundo, calculemos el importe promedio de gasto en relación al género. Para facilitar la interpretación y el seguimiento, crearemos tablas separadas y luego las uniremos:
 
@@ -150,16 +173,16 @@ Podemos ver que el promedio de transacciones para las mujeres fue de 699.054,00 
 ```{r}
 gender_average  = ggplot(data = average_spending_gender) +
                          geom_bar(mapping = aes(x = Gender, y = Average, fill = Gender), stat = 'identity') +
-                         labs(title = 'Gasto Promedio Por género') +
+                         labs(title = 'Gasto Promedio Por Género Clientes', x = 'Género', y = 'Gasto Promedio', fill = 'Género') +
                          scale_fill_brewer(palette = 'PuBuGn')
 print(gender_average)
 ```
 
 Aquí podemos ver una observación interesante. Aunque las mujeres hacen menos compras que los hombres, parecen estar comprando casi tanto en promedio como los hombres. Dicho esto, hay que tener en cuenta la escala, ya que las mujeres siguen gastando en promedio unos 250.000 dólares menos que los hombres.
 
-**Top Sellers**
+# Análisis Variable Top Sellers (Productos Más Vendidos).
 
-Ahora vamos a examinar nuestros productos más vendidos. En esta situación, no agruparemos por ID de producto ya que queremos ver duplicados, por si acaso la gente está comprando 2 o más cantidades del mismo producto.
+Ahora vamos a examinar los productos más vendidos en esta tienda durante el Black Friday. En esta situación, no agruparemos por ID de producto ya que queremos ver duplicados, por si acaso la gente está comprando 2 o más cantidades del mismo producto.
 
 ```{r}
 top_sellers = datos %>%
@@ -168,7 +191,7 @@ top_5 = head(top_sellers, 5)
 top_5
 ```
 
-Nuestros 5 productos más vendidos son (por ID del producto):
+Los 5 productos más vendidos son (por ID del producto):
 
 * P00265242 = 1858
 * P00110742 = 1591
@@ -176,37 +199,35 @@ Nuestros 5 productos más vendidos son (por ID del producto):
 * P00112142 = 1539
 * P00057642 = 1430
 
-Ahora que hemos identificado nuestros 5 productos más vendidos, vamos a examinar el producto más vendido, P00265242.
+Ahora que hemos identificado nuestros 5 productos más vendidos, vamos a examinar detenidamente el producto más vendido, el producto P00265242.
 
 ```{r}
 best_seller = datos[datos$Product_ID == 'P00265242', ]
 head(best_seller)
 ```
 
-Podemos ver que este producto encaja en Product_Category_1 = 5 y Product_Category_2 = 8. Como se mencionó en la introducción, sería útil tener una clave para hacer referencia al nombre del artículo con el fin de determinar qué es.
+Podemos ver que este producto encaja en Product_Category_1 = 5 y Product_Category_2 = 8. Como se mencionó en la introducción, sería útil tener una clave para hacer referencia al nombre del artículo con el fin de determinar exactamente qué producto es.
 
-Otro hallazgo interesante es que aunque la gente está comprando el mismo producto, están pagando precios diferentes. Esto puede deberse a varias promociones, descuentos o códigos de cupones del Black Friday. De lo contrario, habría que investigar la razón de que los precios de compra del mismo producto difieran entre los clientes.
+Otro observación interesante es que, aunque la gente está comprando el mismo producto, están pagando precios diferentes. Esto puede deberse a varias promociones, descuentos o códigos de cupones del Black Friday. De lo contrario, habría que investigar la razón de que los precios de compra del mismo producto difieran entre los clientes.
 
 Continuemos analizando nuestro best seller para ver si existe alguna relación con el género.
 
 ```{r}
 gender_dist_bs  = ggplot(data = best_seller) +
                  geom_bar(mapping = aes(x = Gender, y = ..count.., fill = Gender)) +
-                 labs(title = 'Gender of Customers (Best Seller)') +
+                 labs(title = 'Relación Género Clientes - Best Seller', x = 'Género', y = 'Nº Clientes', fill = 'Género') +
                  scale_fill_brewer(palette = 'PuBuGn')
 print(gender_dist_bs)
 ```
 
-Observamos una distribución similar entre los géneros a nuestra división general de datos por género.
-
 ```{r}
 gender_dist_bs_prop = ggplot(data = best_seller) + 
                             geom_bar(fill = 'lightblue', mapping = aes(x = Gender, y = ..prop.., group = 1, fill = Gender)) +
-                            labs(title = 'Gender of Customers (Best Seller - Proportion)') +
+                            labs(title = 'Relación Género Clientes - Best Seller - Proporción', x = 'Género', y = 'Proporción') +
                             theme(plot.title = element_text(size=9.5))
 gender_dist_prop = ggplot(data = datos_gender) + 
                          geom_bar(fill = "lightblue4", mapping = aes(x = Gender, y = ..prop.., group = 1)) +
-                         labs(title = 'Gender of Customers (Total Proportion)') +
+                         labs(title = 'Relación Género Clientes - Best Seller - Total', x = 'Género', y = 'Proporción') +
                          theme(plot.title = element_text(size=9.5)) 
 grid.arrange(gender_dist_prop, gender_dist_bs_prop, ncol=2)
 ```
@@ -215,7 +236,7 @@ Podemos ver que entre el conjunto de observaciones generales, tanto los comprado
 
 Ahora, sigamos adelante y examinemos la variable Edad.
 
-**Edad**
+# Análisis Variable Edad.
 
 Comencemos a examinar la edad creando una tabla de cada grupo de edad individual y sus respectivos recuentos.
 
@@ -231,8 +252,8 @@ Aquí podemos ver un dato que muestra el recuento de cada categoría de edad de 
 
 ```{r}
 customers_age_vis = ggplot(data = customers_age) + 
-                           geom_bar(color = 'black', stat = 'identity', mapping = aes(x = Age, y = n, fill = Age)) +
-                           labs(title = 'Age of Customers') +
+                           geom_bar(color = 'white', stat = 'identity', mapping = aes(x = Age, y = n, fill = Age)) +
+                           labs(title = 'Edad Clientes', x = 'Rango Edad', y = 'Nº Clientes') +
                            theme(axis.text.x = element_text(size = 10)) +
                            scale_fill_brewer(palette = 'Blues') +
                            theme(legend.position="none")
@@ -243,8 +264,8 @@ También podemos trazar un gráfico similar que represente la distribución de l
 
 ```{r}
 ageDist_bs  = ggplot(data = best_seller) +
-                     geom_bar(color = 'black', mapping = aes(x = Age, y = ..count.., fill = Age)) +
-                     labs(title = 'Age of Customers (Best Seller)') +
+                     geom_bar(color = 'white', mapping = aes(x = Age, y = ..count.., fill = Age)) +
+                     labs(title = 'Relación Edad Clientes - Best Seller', x = 'Rango Edad', y = 'Nº Clientes') +
                      theme(axis.text.x = element_text(size = 10)) +
                      scale_fill_brewer(palette = 'GnBu') + 
                      theme(legend.position="none")
@@ -261,7 +282,7 @@ Podemos ver que hay alguna desviación con la proporción de clientes agrupados 
 
 Ahora que hemos examinado la edad, vamos a pasar a otra variable, la variable ciudad.
 
-**Ciudad**
+# Análisis Variable Ciudad.
 
 Vamos a crear una tabla de cada User_ID y su correspondiente City_Category.
 
@@ -275,7 +296,7 @@ head(customers_location)
 ```{r}
 customers_location_vis = ggplot(data = customers_location) +
                                 geom_bar(color = 'white', mapping = aes(x = City_Category, y = ..count.., fill = City_Category)) +
-                                labs(title = 'Location of Customers') + 
+                                labs(title = 'Relación Ciudades - NºClientes', x = 'Ciudad', y = 'Nº Clientes') + 
                                 scale_fill_brewer(palette = "Dark2") + 
                                 theme(legend.position="none")
 print(customers_location_vis)
@@ -299,7 +320,7 @@ Ahora que tenemos nuestra tabla, visualicemos nuestros resultados.
 ```{r}
 purchaseCity_vis = ggplot(data = purchases_city_1000s, aes(x = City_Category, y = purchasesThousands, fill = City_Category)) +
                           geom_bar(color = 'white', stat = 'identity') +
-                          labs(title = 'Total Customer Purchase Amount (by City)', y = '($000s)', x = 'City Category') +
+                          labs(title = 'Importe Total Compra Por Ciudad', y = 'Impore en $ ($000s)', x = 'Ciudad') +
                           scale_fill_brewer(palette = "Dark2") + 
                           theme(legend.position="none", plot.title = element_text(size = 9))
 print(purchaseCity_vis)
@@ -342,7 +363,7 @@ city_purchases_count
 ```{r}
 city_count_purchases_vis = ggplot(data = city_purchases_count, aes(x = City_Category, y = CountOfPurchases, fill = City_Category)) +
                            geom_bar(color = 'white', stat = 'identity') +
-                           labs(title = 'Total Purchase Count (by City)', y = 'Count', x = 'City Category') +
+                           labs(title = 'Recuento Total Compras Por Ciudad', y = 'Nº Compras', x = 'Ciudad') +
                            scale_fill_brewer(palette = "Dark2") +
                            theme(legend.position="none", plot.title = element_text(size = 9))
 print(city_count_purchases_vis)
@@ -370,7 +391,7 @@ best_seller_city
 ```{r}
 best_seller_city_vis = ggplot(data = best_seller_city, aes(x = City_Category, y = n, fill = City_Category)) +
                               geom_bar(color = 'white', stat = 'identity') +
-                              labs(title = 'Best Seller Purchase Count (by City)', y = 'Count', x = 'City Category') +
+                              labs(title = 'Recuento Compras Best-Seller Por Ciudad', y = 'Nº Compras', x = 'Ciudad') +
                               scale_fill_brewer(palette = "Blues") +
                               theme(legend.position="none", plot.title = element_text(size = 9))
 grid.arrange(city_count_purchases_vis,best_seller_city_vis, ncol = 2)
@@ -378,7 +399,7 @@ grid.arrange(city_count_purchases_vis,best_seller_city_vis, ncol = 2)
 
 Aunque los clientes que residen en la Ciudad C compran más de nuestros "best seller" que la Ciudad A + B, los residentes de la Ciudad C se quedan atrás de la Ciudad B en el número total de compras.
 
-**Estancia en la ciudad actual**
+# Análisis Variable Estancia en la Ciudad Actual (Años).
 
 Examinemos ahora la distribución de los clientes que han vivido más tiempo en su ciudad.
 
@@ -406,8 +427,8 @@ Parece que la mayoría de nuestros clientes viven en la Ciudad C.
 ```{r}
 customers_stay_vis = ggplot(data = customers_stay, aes(x = Stay_In_Current_City_Years, y = ..count.., fill = Stay_In_Current_City_Years)) +
                             geom_bar(stat = 'count') +
-                            scale_fill_brewer(palette = 15) +
-                            labs(title = 'Customers Stay in Current City', y = 'Count', x = 'Stay in Current City', fill = 'Number of Years in Current City')
+                            scale_fill_brewer(palette = 10) +
+                            labs(title = 'Clientes que Permanecen en su Ciudad Actual (En Años)', y = 'Nº Clientes', x = 'Años Permanencia Ciudad Actual', fill = 'Años')
 print(customers_stay_vis)
 ```
 
@@ -425,15 +446,15 @@ head(stay_cities)
 ggplot(data = stay_cities, aes(x = City_Category, y = n, fill = Stay_In_Current_City_Years)) + 
        geom_bar(stat = "identity", color = 'white') + 
        scale_fill_brewer(palette = 2) + 
-       labs(title = "City Category + Stay in Current City", 
-            y = "Total Count (Years)", 
-            x = "City", 
-            fill = "Stay Years")
+       labs(title = "Categoria Ciudad Por Permanencia en Ciudad Actual (en Años)", 
+            y = "Recuento Total (Años)", 
+            x = "Ciudad", 
+            fill = "Años Permanencia Ciudad Actual")
 ```
 
 En este gráfico podemos ver la distribución de la base total de clientes y sus respectivas ciudades, dividida por la cantidad de tiempo que han vivido allí. Aquí, podemos notar que en cada Ciudad_Categoría, la duración de la estancia más común parece ser de 1 año.
 
-**Compras**
+# Análisis Variable Importe Total Compras.
 
 Vamos a hacer algunas investigaciones con respecto a los clientes y sus compras. Comenzaremos por calcular el monto total de la compra por identificación de usuario.
 
@@ -470,13 +491,13 @@ ggplot(customers_total_purchase_amount, aes(Purchase_Amount)) +
                   color="red", linetype="dashed", size=1) +
        geom_text(aes(x=mean(Purchase_Amount), label=round(mean(Purchase_Amount)), y=1.2e-06), color = 'red', angle=360, size=4, vjust=3, hjust=-.1) +
        geom_text(aes(x=median(Purchase_Amount), label=round(median(Purchase_Amount)), y=1.2e-06), color = 'blue', angle=360,msize=4, vjust=0, hjust=-.1) +
-       scale_x_continuous(name="Purchase Amount", limits=c(0, 7500000), breaks = seq(0,7500000, by = 1000000), expand = c(0,0)) +
-       scale_y_continuous(name="Density", limits=c(0, .00000125), labels = scientific, expand = c(0,0))
+       scale_x_continuous(name="Importe Total Compras", limits=c(0, 7500000), breaks = seq(0,7500000, by = 1000000), expand = c(0,0)) +
+       scale_y_continuous(name="Densidad", limits=c(0, .00000125), labels = scientific, expand = c(0,0))
 ```
 
 Aquí estamos viendo un diagrama de densidad sesgado muy a la derecha (positivo) con una larga cola. Esto significa que hay bastantes valores que se sitúan por encima de la media y que la mayor densidad de valores no es una serie distribuida de forma estándar. Vemos que la mayor densidad de compras se sitúa en torno a los 2.500.000 dólares.
 
-**Estado Civil**
+# Análisis Estado Civil.
 
 Examinemos ahora el estado civil de los clientes de la tienda.
 
@@ -500,7 +521,7 @@ Si echamos la vista atrás a las descripciones variables de los datos, no tenemo
 ```{r}
 marital_vis = ggplot(data = datos_maritalStatus) +
                      geom_bar(mapping = aes(x = Marital_Status, y = ..count.., fill = Marital_Status)) +
-                     labs(title = 'Marital Status') +
+                     labs(title = 'Estado Civil', x = 'Estado Civil', y = 'Nº Clientes', fill = 'Estado Civil') +
                      scale_fill_brewer(palette = 'Pastel2')
 print(marital_vis)
 ```
@@ -522,12 +543,12 @@ head(maritalStatus_cities)
 
 ```{r}
 ggplot(data = maritalStatus_cities, aes(x = City_Category, y = n, fill = Marital_Status)) + 
-       geom_bar(stat = "identity", color = 'black') + 
+       geom_bar(stat = "identity", color = 'white') + 
        scale_fill_brewer(palette = 2) + 
-       labs(title = "City + Marital Status", 
-            y = "Total Count (Shoppers)", 
-            x = "City", 
-            fill = "Marital Status")
+       labs(title = "Estado Civil Por Ciudad", 
+            y = "Nº Clientes", 
+            x = "Ciudad", 
+            fill = "Estado Civil")
 ```
 
 Aquí, podemos ver que fuera de todas las ciudades, la mayor proporción de compradores individuales parece estar en la Ciudad A. Ahora, investiguemos la distribución de Stay_in_Current_City dentro de cada Ciudad_Categoría.
@@ -562,23 +583,23 @@ City_A_stay_vis = ggplot(data = City_A, aes(x = Age, y = ..count.., fill = Age))
                          geom_bar(stat = 'count') +
                          scale_fill_brewer(palette = 8) +
                          theme(legend.position="none", axis.text = element_text(size = 6)) +
-                         labs(title = 'City A', y = 'Count', x = 'Age', fill = 'Age')
+                         labs(title = 'Ciudad A', y = 'Nº Clientes', x = 'Rango Edad', fill = 'Rango Edad')
 City_B_stay_vis = ggplot(data = City_B, aes(x = Age, y = ..count.., fill = Age)) +
                          geom_bar(stat = 'count') +
                          scale_fill_brewer(palette = 9) +
                          theme(legend.position="none", axis.text = element_text(size = 6)) +
-                         labs(title = 'City B', y = 'Count', x = 'Age', fill = 'Age')
+                         labs(title = 'Ciudad B', y = 'Nº Clientes', x = 'Rango Edad', fill = 'Rango Edad')
 City_C_stay_vis = ggplot(data = City_C, aes(x = Age, y = ..count.., fill = Age)) +
                          geom_bar(stat = 'count') +
                          scale_fill_brewer(palette = 11) +
                          theme(legend.position="none", axis.text = element_text(size = 6)) +
-                         labs(title = 'City C', y = 'Count', x = 'Age', fill = 'Age')
+                         labs(title = 'Ciudad C', y = 'Nº Clientes', x = 'Rango Edad', fill = 'Rango Edad')
 grid.arrange(City_A_stay_vis, City_B_stay_vis, City_C_stay_vis, ncol = 3)
 ```
 
 Parece que la ciudad A tiene menos compradores mayores de 45 años que las otras ciudades. Esto podría ser un factor en los niveles resultantes de Estado_Matrimonial dentro de cada ciudad.
 
-**Top Shoppers**
+# Análisis Variable TOP Compradores.
 
 Ahora, investigaremos quiénes fueron nuestros principales compradores durante el Black Friday.
 
@@ -615,7 +636,7 @@ head(top_shoppers_averagePurchase)
 
 Parece que User_ID 1005069 tiene la cantidad de compra promedio más alta y una cantidad total de compra de 308454. User_ID 1003902 está justo detrás de User_ID 1005069 en Average_Purchase_Amount, pero tiene una cantidad total de compra mucho mayor de 1746284.
 
-**Empleo**
+# Análisis Variable Empleo Clientes.
 
 Lo último que analizaremos es la ocupación de los clientes en nuestros datos.
 
@@ -645,9 +666,9 @@ Ahora, vamos a trazar cada ocupación y su total Purchase_Amount.
 ```{r}
 occupation = ggplot(data = totalPurchases_Occupation) +
                     geom_bar(mapping = aes(x = reorder(Occupation, -Purchase_Amount), y = Purchase_Amount, fill = Occupation), stat = 'identity') +
-                    scale_x_discrete(name="Occupation", breaks = seq(0,20, by = 1), expand = c(0,0)) +
-                    scale_y_continuous(name="Purchase Amount ($)", expand = c(0,0), limits = c(0, 750000000)) +
-                    labs(title = 'Total Purchase Amount by Occupation') + 
+                    scale_x_discrete(name="Empleo", breaks = seq(0,20, by = 1), expand = c(0,0)) +
+                    scale_y_continuous(name="Importe Compra ($)", expand = c(0,0), limits = c(0, 750000000)) +
+                    labs(title = 'Compras Totales Por Empleo') + 
                     theme(legend.position="none")
 print(occupation)
 ```

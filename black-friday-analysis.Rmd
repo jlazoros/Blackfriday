@@ -60,7 +60,7 @@ This dataset has 12 variables
 
 ```{r, message = FALSE, echo = FALSE} 
 #input data
-BlackFriday <- read.csv("../input/BlackFriday.csv")
+BlackFriday <- read.csv("BlackFriday.csv")
 
 #print head data
 head(BlackFriday)
